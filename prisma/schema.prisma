@@ -1,0 +1,252 @@
+// RideBuddy database schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Auth & users ─────────────────────────────────────────────────────────────
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  phone         String?  @unique
+  name          String
+  passwordHash  String
+  avatarUrl     String?
+  bio           String?
+  role          String   @default("BOTH") // PASSENGER | DRIVER | BOTH
+  isAdmin       Boolean  @default(false)
+  kycStatus     String   @default("UNVERIFIED") // UNVERIFIED | PENDING | VERIFIED | REJECTED
+  phoneVerified Boolean  @default(false)
+  emailVerified Boolean  @default(false)
+  ratingAvg     Float    @default(0)
+  ratingCount   Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  kycDocuments     KycDocument[]
+  vehicles         Vehicle[]
+  ridesAsDriver    Ride[]        @relation("driverRides")
+  bookings         Booking[]     @relation("passengerBookings")
+  messagesSent     Message[]     @relation("sentMessages")
+  messagesReceived Message[]     @relation("receivedMessages")
+  reviewsGiven     Review[]      @relation("reviewsGiven")
+  reviewsReceived  Review[]      @relation("reviewsReceived")
+  locations        Location[]
+  payments         Payment[]
+  otps             Otp[]
+}
+
+// ─── KYC documents (DL, Aadhaar, selfie) ──────────────────────────────────────
+model KycDocument {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // DRIVING_LICENSE | AADHAAR | SELFIE | PAN
+  number      String?
+  fileUrl     String
+  status      String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewNote  String?
+  createdAt   DateTime @default(now())
+  reviewedAt  DateTime?
+
+  @@index([userId])
+}
+
+// ─── Phone OTP (mock) ─────────────────────────────────────────────────────────
+model Otp {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
+
+// ─── Vehicles ─────────────────────────────────────────────────────────────────
+model Vehicle {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  type        String   // CAR | BIKE | SUV | AUTO | OTHER
+  make        String
+  model       String
+  year        Int
+  color       String
+  plateNumber String   @unique
+  seats       Int      @default(4)
+  photoUrl    String?
+  rcUrl       String?  // registration certificate
+  insuranceUrl String?
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  rides       Ride[]
+
+  @@index([ownerId])
+}
+
+// ─── Rides ────────────────────────────────────────────────────────────────────
+model Ride {
+  id              String   @id @default(cuid())
+  driverId        String
+  driver          User     @relation("driverRides", fields: [driverId], references: [id])
+  vehicleId       String?
+  vehicle         Vehicle? @relation(fields: [vehicleId], references: [id])
+
+  fromCity        String
+  fromAddress     String
+  fromLat         Float
+  fromLng         Float
+  toCity          String
+  toAddress       String
+  toLat           Float
+  toLng           Float
+
+  departureTime   DateTime
+  estimatedArrival DateTime?
+  distanceKm      Float?
+  durationMin     Int?
+
+  totalSeats      Int
+  availableSeats  Int
+  pricePerSeat    Float
+
+  description     String?
+  allowSmoking    Boolean  @default(false)
+  allowPets       Boolean  @default(false)
+  allowMusic      Boolean  @default(true)
+  instantBooking  Boolean  @default(true)
+  womenOnly       Boolean  @default(false)
+
+  status          String   @default("SCHEDULED") // SCHEDULED | IN_PROGRESS | COMPLETED | CANCELLED
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  bookings        Booking[]
+  locations       Location[]
+  messages        Message[]
+  reviews         Review[]
+  stops           RideStop[]
+
+  @@index([driverId])
+  @@index([fromCity, toCity])
+  @@index([departureTime])
+}
+
+// Optional intermediate stops a driver allows pickups from
+model RideStop {
+  id        String @id @default(cuid())
+  rideId    String
+  ride      Ride   @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  city      String
+  address   String
+  lat       Float
+  lng       Float
+  order     Int
+
+  @@index([rideId])
+}
+
+// ─── Bookings ─────────────────────────────────────────────────────────────────
+model Booking {
+  id            String   @id @default(cuid())
+  rideId        String
+  ride          Ride     @relation(fields: [rideId], references: [id])
+  passengerId   String
+  passenger     User     @relation("passengerBookings", fields: [passengerId], references: [id])
+  seats         Int      @default(1)
+  totalAmount   Float
+  pickupAddress String?
+  pickupLat     Float?
+  pickupLng     Float?
+  dropAddress   String?
+  dropLat       Float?
+  dropLng       Float?
+  status        String   @default("PENDING") // PENDING | CONFIRMED | CANCELLED | COMPLETED | REFUNDED
+  cancelReason  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  payment       Payment?
+
+  @@index([rideId])
+  @@index([passengerId])
+}
+
+// ─── Payments (Razorpay) ──────────────────────────────────────────────────────
+model Payment {
+  id                 String   @id @default(cuid())
+  bookingId          String   @unique
+  booking            Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  amount             Float
+  currency           String   @default("INR")
+  provider           String   @default("razorpay") // razorpay | mock
+  providerOrderId    String?
+  providerPaymentId  String?
+  providerSignature  String?
+  status             String   @default("CREATED") // CREATED | PAID | FAILED | REFUNDED
+  createdAt          DateTime @default(now())
+  paidAt             DateTime?
+}
+
+// ─── Live location pings ──────────────────────────────────────────────────────
+model Location {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rideId    String?
+  ride      Ride?    @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  lat       Float
+  lng       Float
+  heading   Float?
+  speed     Float?
+  createdAt DateTime @default(now())
+
+  @@index([rideId, createdAt])
+  @@index([userId, createdAt])
+}
+
+// ─── Messages ─────────────────────────────────────────────────────────────────
+model Message {
+  id         String   @id @default(cuid())
+  rideId     String
+  ride       Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  fromUserId String
+  fromUser   User     @relation("sentMessages", fields: [fromUserId], references: [id])
+  toUserId   String
+  toUser     User     @relation("receivedMessages", fields: [toUserId], references: [id])
+  content    String
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([rideId])
+}
+
+// ─── Reviews ──────────────────────────────────────────────────────────────────
+model Review {
+  id          String   @id @default(cuid())
+  rideId      String
+  ride        Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  fromUserId  String
+  fromUser    User     @relation("reviewsGiven", fields: [fromUserId], references: [id])
+  toUserId    String
+  toUser      User     @relation("reviewsReceived", fields: [toUserId], references: [id])
+  rating      Int      // 1..5
+  comment     String?
+  createdAt   DateTime @default(now())
+
+  @@unique([rideId, fromUserId, toUserId])
+  @@index([toUserId])
+}

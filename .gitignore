@@ -3,6 +3,13 @@
 # dependencies
 /node_modules
 /.pnp
+
+# database
+/prisma/dev.db
+/prisma/dev.db-journal
+
+# user uploads (dev only)
+/public/uploads
 .pnp.js
 .yarn/install-state.gz
 
@@ -25,8 +32,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
+# local env files (NEVER commit secrets)
+.env
+.env.local
 .env*.local
+.env.production
 
 # vercel
 .vercel
@@ -34,3 +44,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma

@@ -2,26 +2,262 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 100%;
+    --foreground: 160 14% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 160 14% 12%;
+    --primary: 158 76% 37%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 158 30% 96%;
+    --secondary-foreground: 160 14% 12%;
+    --muted: 158 14% 95%;
+    --muted-foreground: 160 8% 42%;
+    --accent: 158 30% 94%;
+    --accent-foreground: 160 14% 12%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 158 14% 90%;
+    --input: 158 14% 88%;
+    --ring: 158 76% 37%;
+    --radius: 0.75rem;
   }
-}
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  .dark {
+    --background: 160 18% 7%;
+    --foreground: 0 0% 98%;
+    --card: 160 18% 9%;
+    --card-foreground: 0 0% 98%;
+    --primary: 158 70% 45%;
+    --primary-foreground: 160 18% 7%;
+    --secondary: 160 14% 14%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 160 14% 14%;
+    --muted-foreground: 158 10% 65%;
+    --accent: 160 14% 16%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 160 14% 18%;
+    --input: 160 14% 18%;
+    --ring: 158 70% 45%;
+  }
+
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .gradient-hero {
+    background:
+      radial-gradient(60% 60% at 80% 0%, hsla(158, 76%, 60%, 0.18) 0%, transparent 60%),
+      radial-gradient(60% 60% at 0% 0%, hsla(180, 70%, 55%, 0.18) 0%, transparent 60%),
+      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(158, 30%, 97%) 100%);
   }
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/40;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Thin app-scroll: shown only when content overflows.
+     Visible as a slim 6px strip on the scroll container. */
+  .app-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+    overscroll-behavior: contain;
+  }
+  .app-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .app-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .app-scroll::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  .app-scroll::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+  .app-scroll::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+/* Antd dropdown polish — thin scrollbar + pop animation */
+.ant-select-dropdown {
+  border-radius: 14px !important;
+  padding: 6px !important;
+  box-shadow:
+    0 8px 24px -8px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.04) !important;
+}
+.ant-select-dropdown .rc-virtual-list-holder,
+.ant-select-dropdown .ant-select-item-option-grouped,
+.ant-picker-dropdown .rc-virtual-list-holder {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+.ant-select-dropdown .rc-virtual-list-holder::-webkit-scrollbar,
+.ant-picker-dropdown .rc-virtual-list-holder::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.ant-select-dropdown .rc-virtual-list-holder::-webkit-scrollbar-thumb,
+.ant-picker-dropdown .rc-virtual-list-holder::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+.ant-select-dropdown .rc-virtual-list-holder::-webkit-scrollbar-track,
+.ant-picker-dropdown .rc-virtual-list-holder::-webkit-scrollbar-track {
+  background: transparent;
+}
+/* Hide the native rc-virtual-list overlay scrollbar widget when virtual is on */
+.ant-select-dropdown .rc-virtual-list-scrollbar {
+  width: 6px !important;
+}
+.ant-select-dropdown .rc-virtual-list-scrollbar-thumb {
+  background: hsl(var(--border)) !important;
+  border-radius: 9999px !important;
+}
+.ant-select-item-option {
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+}
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background-color: hsl(158 80% 95%) !important;
+  color: #0c6c50 !important;
+  font-weight: 600 !important;
+}
+.ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background-color: hsl(var(--accent)) !important;
+}
+
+/* Leaflet attribution touch-up */
+.leaflet-container {
+  font-family: inherit;
+}
+.leaflet-control-attribution {
+  font-size: 10px !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Cap Leaflet's internal panes so app dropdowns/menus always sit on top.
+   Leaflet's defaults are 400-700 which clobber Tailwind's z-50. */
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 400;
+}
+.leaflet-control {
+  z-index: 500;
+}
+
+/* Antd popups need to be above the map and place-picker dropdown too */
+.ant-select-dropdown,
+.ant-picker-dropdown,
+.ant-tooltip,
+.ant-popover,
+.ant-modal-wrap,
+.ant-modal-mask {
+  z-index: 1300 !important;
+}
+
+/* ── Ant Design DatePicker / TimePicker dropdown polish ─────────────────── */
+.ant-picker-dropdown .ant-picker-panel-container {
+  border-radius: 14px !important;
+  box-shadow:
+    0 12px 40px -12px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(0, 0, 0, 0.04) !important;
+  overflow: hidden;
+}
+
+/* Time picker columns — replace chunky default scrollbar with thin app style */
+.ant-picker-time-panel-column {
+  scrollbar-width: thin !important;
+  scrollbar-color: hsl(var(--border)) transparent !important;
+  border-inline-end-color: hsl(var(--border)) !important;
+  padding: 6px 0 !important;
+}
+.ant-picker-time-panel-column::-webkit-scrollbar {
+  width: 4px !important;
+  height: 4px !important;
+}
+.ant-picker-time-panel-column::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+.ant-picker-time-panel-column::-webkit-scrollbar-thumb {
+  background: hsl(var(--border)) !important;
+  border-radius: 9999px !important;
+}
+.ant-picker-time-panel-column::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5) !important;
+}
+
+/* Time-cell inner styling */
+.ant-picker-time-panel-cell {
+  margin: 2px 6px !important;
+}
+.ant-picker-time-panel-cell-inner {
+  border-radius: 8px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  font-variant-numeric: tabular-nums !important;
+  padding-inline-start: 0 !important;
+  text-align: center !important;
+  transition: background-color 0.15s ease !important;
+}
+.ant-picker-time-panel-cell:not(.ant-picker-time-panel-cell-disabled)
+  .ant-picker-time-panel-cell-inner:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+.ant-picker-time-panel-cell-selected .ant-picker-time-panel-cell-inner {
+  background-color: hsl(158 80% 95%) !important;
+  color: #0c6c50 !important;
+  font-weight: 600 !important;
+}
+
+/* Calendar (date) cells */
+.ant-picker-cell .ant-picker-cell-inner {
+  border-radius: 8px !important;
+}
+.ant-picker-cell-in-view.ant-picker-cell-today
+  .ant-picker-cell-inner::before {
+  border-color: #16a97a !important;
+  border-radius: 8px !important;
+}
+.ant-picker-cell-in-view.ant-picker-cell-selected
+  .ant-picker-cell-inner,
+.ant-picker-cell-in-view.ant-picker-cell-range-start
+  .ant-picker-cell-inner,
+.ant-picker-cell-in-view.ant-picker-cell-range-end
+  .ant-picker-cell-inner {
+  background-color: #16a97a !important;
+}
+
+/* Footer in pickers (Now / OK / Today) */
+.ant-picker-footer {
+  border-top-color: hsl(var(--border)) !important;
+}
+.ant-picker-now-btn {
+  color: #16a97a !important;
+}
+.ant-picker-now-btn:hover {
+  color: #0c6c50 !important;
 }
