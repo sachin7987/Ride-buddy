@@ -21,15 +21,19 @@ export function roleLabel(role?: string | null): string {
   }
 }
 
-/** Where to send the user after sign-up based on the role they picked. */
-export function postSignupRedirect(role: UserRole): string {
-  switch (role) {
-    case "DRIVER":
-      return "/onboarding?next=vehicle";
-    case "PASSENGER":
-      return "/onboarding?next=search";
-    case "BOTH":
-    default:
-      return "/onboarding";
-  }
+/** Where to send the user after sign-up. The role is already captured during
+ *  sign-up itself, so we send everyone straight to identity verification —
+ *  the only remaining step before they can use the platform. */
+export function postSignupRedirect(_role: UserRole): string {
+  return "/kyc";
+}
+
+/**
+ * KYC documents a user must submit for full verification, by role:
+ *   • Passenger → AADHAAR + SELFIE (no driving license)
+ *   • Driver / Both → DRIVING_LICENSE + AADHAAR + SELFIE
+ */
+export function requiredKycDocs(role?: string | null): string[] {
+  if (role === "PASSENGER") return ["AADHAAR", "SELFIE"];
+  return ["DRIVING_LICENSE", "AADHAAR", "SELFIE"];
 }

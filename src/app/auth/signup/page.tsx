@@ -19,6 +19,8 @@ import {
   Car,
   Sparkles,
   Check,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { postSignupRedirect, type UserRole } from "@/lib/roles";
@@ -51,6 +53,7 @@ const ROLE_OPTIONS: {
 
 export default function SignupPage() {
   const router = useRouter();
+  const [step, setStep] = useState<1 | 2>(1);
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -60,6 +63,13 @@ export default function SignupPage() {
     password: "",
     role: "PASSENGER" as UserRole,
   });
+
+  function nextStep(e: React.FormEvent) {
+    e.preventDefault();
+    // Browser-level required + pattern attrs already validated when the
+    // form submits, so by here we know step 1 is complete.
+    setStep(2);
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -93,139 +103,245 @@ export default function SignupPage() {
         <CardContent className="p-8">
           <h1 className="text-2xl font-bold">Create your account</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Join 1M+ riders and drivers on RideBuddy.
+            {step === 1
+              ? "Join 1M+ riders and drivers on RideBuddy."
+              : "Tell us how you'd like to use RideBuddy."}
           </p>
-          <form onSubmit={submit} className="mt-6 space-y-4">
-            {/* Role picker */}
-            <div>
-              <Label>How will you use RideBuddy?</Label>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {ROLE_OPTIONS.map((opt) => {
-                  const selected = form.role === opt.value;
-                  const Icon = opt.icon;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setForm({ ...form, role: opt.value })}
-                      className={cn(
-                        "relative flex flex-col items-center text-center gap-1.5 rounded-xl border-2 px-2 py-3 transition-all",
-                        selected
-                          ? "border-brand-500 bg-brand-50 shadow-sm"
-                          : "border-border hover:border-brand-300 hover:bg-accent/40"
-                      )}
-                    >
-                      {selected && (
-                        <span className="absolute top-1.5 right-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-white">
-                          <Check className="h-3 w-3" />
-                        </span>
-                      )}
-                      <Icon
-                        className={cn(
-                          "h-5 w-5",
-                          selected ? "text-brand-600" : "text-muted-foreground"
-                        )}
-                      />
-                      <span className="text-sm font-medium">{opt.title}</span>
-                      <span className="text-[10px] leading-tight text-muted-foreground">
-                        {opt.desc}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="mt-1.5 text-[11px] text-muted-foreground">
-                You can change this later in your profile.
-              </p>
-            </div>
 
-            <div>
-              <Label htmlFor="name">Full name</Label>
-              <div className="relative mt-1">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="name"
-                  required
-                  className="pl-9"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
+          {/* Step indicator */}
+          <div className="mt-5 flex items-center gap-2">
+            <StepDot active n={1} done={step === 2} label="Account" />
+            <span
+              className={cn(
+                "h-0.5 flex-1 rounded transition-colors",
+                step === 2 ? "bg-brand-500" : "bg-border"
+              )}
+            />
+            <StepDot active={step === 2} n={2} label="Role" />
+          </div>
+
+          {step === 1 ? (
+            <form onSubmit={nextStep} className="mt-6 space-y-4">
+              <div>
+                <Label htmlFor="name">Full name</Label>
+                <div className="relative mt-1">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="name"
+                    required
+                    className="pl-9"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  />
+                </div>
               </div>
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <div className="relative mt-1">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  className="pl-9"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                />
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <div className="relative mt-1">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    className="pl-9"
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm({ ...form, email: e.target.value })
+                    }
+                  />
+                </div>
               </div>
-            </div>
-            <div>
-              <Label htmlFor="phone">Phone (10 digits)</Label>
-              <div className="relative mt-1">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  pattern="[0-9]{10}"
-                  maxLength={10}
-                  required
-                  className="pl-9"
-                  value={form.phone}
-                  onChange={(e) =>
-                    setForm({ ...form, phone: e.target.value.replace(/\D/g, "") })
-                  }
-                />
+              <div>
+                <Label htmlFor="phone">Phone (10 digits)</Label>
+                <div className="relative mt-1">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    pattern="[0-9]{10}"
+                    maxLength={10}
+                    required
+                    className="pl-9"
+                    value={form.phone}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        phone: e.target.value.replace(/\D/g, ""),
+                      })
+                    }
+                  />
+                </div>
               </div>
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <div className="relative mt-1">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={show ? "text" : "password"}
-                  required
-                  minLength={6}
-                  className="pl-9 pr-10"
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm({ ...form, password: e.target.value })
-                  }
-                />
-                <button
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <div className="relative mt-1">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={show ? "text" : "password"}
+                    required
+                    minLength={6}
+                    className="pl-9 pr-10"
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm({ ...form, password: e.target.value })
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShow(!show)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground"
+                  >
+                    {show ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              <Button
+                type="submit"
+                variant="gradient"
+                className="w-full"
+                size="lg"
+              >
+                Continue
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={submit} className="mt-6 space-y-5">
+              <div>
+                <Label>How will you use RideBuddy?</Label>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {ROLE_OPTIONS.map((opt) => {
+                    const selected = form.role === opt.value;
+                    const Icon = opt.icon;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setForm({ ...form, role: opt.value })}
+                        className={cn(
+                          "relative flex flex-col items-center text-center gap-1.5 rounded-xl border-2 px-2 py-3 transition-all",
+                          selected
+                            ? "border-brand-500 bg-brand-50 shadow-sm"
+                            : "border-border hover:border-brand-300 hover:bg-accent/40"
+                        )}
+                      >
+                        {selected && (
+                          <span className="absolute top-1.5 right-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-white">
+                            <Check className="h-3 w-3" />
+                          </span>
+                        )}
+                        <Icon
+                          className={cn(
+                            "h-5 w-5",
+                            selected ? "text-brand-600" : "text-muted-foreground"
+                          )}
+                        />
+                        <span className="text-sm font-medium">{opt.title}</span>
+                        <span className="text-[10px] leading-tight text-muted-foreground">
+                          {opt.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  You can change this later in your profile.
+                </p>
+              </div>
+
+              {/* Per-role explainer to set expectations about KYC */}
+              <div className="rounded-lg bg-muted/50 border p-3 text-xs text-muted-foreground">
+                {form.role === "PASSENGER" ? (
+                  <>
+                    <strong className="text-foreground">As a passenger,</strong>{" "}
+                    you'll only need to verify your identity with Aadhaar and a
+                    selfie — no driving license required.
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-foreground">As a driver,</strong>{" "}
+                    you'll need to verify your identity with your Aadhaar,
+                    driving license and a selfie before publishing rides.
+                  </>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <Button
                   type="button"
-                  onClick={() => setShow(!show)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground"
+                  variant="outline"
+                  size="lg"
+                  onClick={() => setStep(1)}
+                  className="px-3"
                 >
-                  {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="submit"
+                  variant="gradient"
+                  className="flex-1"
+                  size="lg"
+                  loading={loading}
+                >
+                  Create account
+                </Button>
               </div>
-            </div>
-            <Button
-              type="submit"
-              variant="gradient"
-              className="w-full"
-              size="lg"
-              loading={loading}
-            >
-              Create account
-            </Button>
-          </form>
+            </form>
+          )}
+
           <p className="mt-6 text-sm text-center text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/auth/signin" className="text-brand-600 font-medium hover:underline">
+            <Link
+              href="/auth/signin"
+              className="text-brand-600 font-medium hover:underline"
+            >
               Sign in
             </Link>
           </p>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function StepDot({
+  active,
+  done,
+  n,
+  label,
+}: {
+  active?: boolean;
+  done?: boolean;
+  n: number;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className={cn(
+          "h-6 w-6 rounded-full text-xs font-semibold flex items-center justify-center transition-colors",
+          done
+            ? "bg-brand-500 text-white"
+            : active
+            ? "bg-brand-500 text-white"
+            : "bg-muted text-muted-foreground"
+        )}
+      >
+        {done ? <Check className="h-3 w-3" /> : n}
+      </span>
+      <span
+        className={cn(
+          "text-xs font-medium",
+          active || done ? "text-foreground" : "text-muted-foreground"
+        )}
+      >
+        {label}
+      </span>
     </div>
   );
 }

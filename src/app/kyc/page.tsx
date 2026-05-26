@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ShieldCheck, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { KycUploader } from "./uploader";
+import { requiredKycDocs } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -16,19 +17,24 @@ export default async function KycPage() {
   });
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
-    select: { kycStatus: true },
+    select: { kycStatus: true, role: true },
   });
   const status = dbUser?.kycStatus ?? "UNVERIFIED";
+  const role = dbUser?.role ?? "BOTH";
+  const required = requiredKycDocs(role);
+  const isPassengerOnly = role === "PASSENGER";
 
   const byType = (t: string) => docs.find((d) => d.type === t);
 
   return (
     <div className="container max-w-3xl py-10">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Identity verification</h1>
-          <p className="text-muted-foreground mt-1">
-            Required for everyone — drivers and passengers — to keep our community safe.
+      <div className="flex items-start sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">Identity verification</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+            {isPassengerOnly
+              ? "As a passenger, we just need your Aadhaar and a selfie to keep our community safe."
+              : "Required for everyone — drivers and passengers — to keep our community safe."}
           </p>
         </div>
         <StatusPill status={status} />
@@ -41,7 +47,9 @@ export default async function KycPage() {
             <div>
               <p className="font-semibold text-emerald-900">You're fully verified.</p>
               <p className="text-sm text-emerald-800 mt-1">
-                You can now publish rides and book without restrictions.
+                {isPassengerOnly
+                  ? "You can now book any ride without restrictions."
+                  : "You can now publish rides and book without restrictions."}
               </p>
             </div>
           </CardContent>
@@ -75,13 +83,15 @@ export default async function KycPage() {
       )}
 
       <div className="mt-8 space-y-4">
-        <KycUploader
-          type="DRIVING_LICENSE"
-          title="Driving License"
-          description="Required if you'll drive. Front side, fully visible."
-          existing={byType("DRIVING_LICENSE")}
-          requiresNumber
-        />
+        {required.includes("DRIVING_LICENSE") && (
+          <KycUploader
+            type="DRIVING_LICENSE"
+            title="Driving License"
+            description="Required to drive. Front side, fully visible."
+            existing={byType("DRIVING_LICENSE")}
+            requiresNumber
+          />
+        )}
         <KycUploader
           type="AADHAAR"
           title="Aadhaar Card"
@@ -96,6 +106,20 @@ export default async function KycPage() {
           existing={byType("SELFIE")}
         />
       </div>
+
+      {isPassengerOnly && (
+        <div className="mt-6 rounded-lg border bg-muted/40 p-4 text-sm">
+          <p className="font-medium text-foreground">
+            Want to drive too? Upgrade your account to access publishing rides.
+          </p>
+          <Link
+            href="/profile?becomeDriver=1"
+            className="text-brand-600 hover:underline text-sm font-medium"
+          >
+            Become a driver →
+          </Link>
+        </div>
+      )}
 
       <p className="mt-6 text-xs text-muted-foreground">
         We never share your documents. They are used only to verify your identity. By
@@ -122,7 +146,7 @@ function StatusPill({ status }: { status: string }) {
   };
   const m = map[status] ?? map.UNVERIFIED;
   return (
-    <Badge variant={m.variant} className="text-xs px-3 py-1.5">
+    <Badge variant={m.variant} className="shrink-0 text-xs px-3 py-1.5">
       <m.icon className="h-3.5 w-3.5 mr-1" />
       {m.label}
     </Badge>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { saveFile } from "@/lib/upload";
+import { requiredKycDocs } from "@/lib/roles";
 
 const ALLOWED = ["DRIVING_LICENSE", "AADHAAR", "SELFIE", "PAN"] as const;
 
@@ -55,17 +56,20 @@ export async function POST(req: Request) {
     },
   });
 
-  // If user has all three (DL, Aadhaar, Selfie) submitted, mark overall status PENDING
+  // If the user has submitted every doc required for their role, flip
+  // their overall kycStatus to PENDING so admins see them in the queue.
+  // Passengers only need AADHAAR + SELFIE; drivers also need DRIVING_LICENSE.
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+  const required = requiredKycDocs(dbUser?.role);
   const have = await prisma.kycDocument.findMany({
     where: { userId: session.user.id },
-    select: { type: true, status: true },
+    select: { type: true },
   });
-  const types = new Set(have.map((d) => d.type));
-  if (
-    types.has("DRIVING_LICENSE") &&
-    types.has("AADHAAR") &&
-    types.has("SELFIE")
-  ) {
+  const submitted = new Set(have.map((d) => d.type));
+  if (required.every((t) => submitted.has(t))) {
     await prisma.user.update({
       where: { id: session.user.id },
       data: { kycStatus: "PENDING" },

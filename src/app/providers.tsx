@@ -3,6 +3,8 @@ import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import { ConfigProvider, theme as antdTheme } from "antd";
+import NextTopLoader from "nextjs-toploader";
+import { PwaInstall } from "@/components/pwa-install";
 
 const antdThemeConfig = {
   token: {
@@ -36,6 +38,16 @@ const antdThemeConfig = {
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
+      {/* Top progress bar — instant feedback on every Next.js navigation */}
+      <NextTopLoader
+        color="#16a97a"
+        height={3}
+        showSpinner={false}
+        crawlSpeed={200}
+        speed={250}
+        easing="ease"
+        shadow="0 0 10px #16a97a, 0 0 5px #16a97a"
+      />
       <AntdRegistry>
         <ConfigProvider theme={antdThemeConfig}>{children}</ConfigProvider>
       </AntdRegistry>
@@ -44,6 +56,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         richColors
         toastOptions={{ style: { borderRadius: "12px" } }}
       />
+      <PwaInstall />
     </SessionProvider>
   );
 }

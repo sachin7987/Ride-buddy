@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
@@ -13,6 +13,21 @@ export const metadata: Metadata = {
   description:
     "Carpool with verified drivers and passengers. Save money, reduce traffic, make new friends. Bikes, cars and more — RideBuddy connects people travelling the same way.",
   metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
+  applicationName: "RideBuddy",
+  appleWebApp: {
+    capable: true,
+    title: "RideBuddy",
+    statusBarStyle: "default",
+  },
+  formatDetection: { telephone: false },
+};
+
+// Ensure proper rendering on mobile (no zoom-on-focus, accurate viewport).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#16a97a",
 };
 
 export default function RootLayout({
@@ -23,7 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} font-sans h-screen overflow-hidden flex flex-col bg-background`}
+        className={`${inter.variable} font-sans h-screen [height:100dvh] overflow-hidden flex flex-col bg-background`}
       >
         <Providers>
           <Navbar />

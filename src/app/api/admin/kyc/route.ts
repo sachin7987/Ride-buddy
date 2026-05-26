@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { requiredKycDocs } from "@/lib/roles";
 
 const schema = z.object({
   documentId: z.string(),
@@ -25,15 +26,19 @@ export async function POST(req: Request) {
     },
   });
 
-  // Recompute user kyc status
-  const userDocs = await prisma.kycDocument.findMany({
-    where: { userId: doc.userId },
-  });
+  // Recompute user kyc status against the docs *their role* needs.
+  const [userDocs, owner] = await Promise.all([
+    prisma.kycDocument.findMany({ where: { userId: doc.userId } }),
+    prisma.user.findUnique({
+      where: { id: doc.userId },
+      select: { role: true },
+    }),
+  ]);
   const types = userDocs.reduce<Record<string, string>>((acc, d) => {
     acc[d.type] = d.status;
     return acc;
   }, {});
-  const required = ["DRIVING_LICENSE", "AADHAAR", "SELFIE"];
+  const required = requiredKycDocs(owner?.role);
   let status = "UNVERIFIED";
   if (required.every((t) => types[t] === "APPROVED")) status = "VERIFIED";
   else if (required.some((t) => types[t] === "REJECTED")) status = "REJECTED";

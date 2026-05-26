@@ -9,7 +9,6 @@ const MARKETING_ROUTES = ["/"];
 // Routes that show no footer at all (focused flows like checkout/auth).
 const NO_FOOTER_PREFIXES = [
   "/auth",
-  "/onboarding",
   "/bookings/", // booking detail + checkout — keep distraction-free
   "/rides/", // ride detail + tracker
   "/admin",

@@ -2,7 +2,15 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
-import { Menu, X, Search, PlusCircle, ShieldCheck, LogOut } from "lucide-react";
+import {
+  Menu,
+  X,
+  Search,
+  PlusCircle,
+  ShieldCheck,
+  LogOut,
+  Repeat,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -102,13 +110,15 @@ export function Navbar() {
                     label={showDriver ? "My trips" : "My bookings"}
                   />
                   <DropItem href="/kyc" label="KYC verification" />
-                  {/* Upgrade prompt for passenger-only users */}
-                  {role === "PASSENGER" && (
-                    <DropItem
-                      href="/profile?becomeDriver=1"
-                      label="Become a driver →"
-                    />
-                  )}
+                  <DropItem
+                    href="/account/mode"
+                    label={
+                      role === "PASSENGER"
+                        ? "Become a driver"
+                        : "Switch mode"
+                    }
+                    icon={Repeat}
+                  />
                   {session.user.isAdmin && (
                     <DropItem href="/admin" label="Admin panel" />
                   )}
@@ -198,15 +208,14 @@ export function Navbar() {
               >
                 KYC verification
               </Link>
-              {role === "PASSENGER" && (
-                <Link
-                  href="/profile?becomeDriver=1"
-                  onClick={() => setOpen(false)}
-                  className="px-3 py-3 rounded-lg hover:bg-accent text-brand-700 font-medium"
-                >
-                  Become a driver →
-                </Link>
-              )}
+              <Link
+                href="/account/mode"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-3 py-3 rounded-lg hover:bg-accent"
+              >
+                <Repeat className="h-4 w-4 text-muted-foreground" />
+                {role === "PASSENGER" ? "Become a driver" : "Switch mode"}
+              </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="text-left px-3 py-3 rounded-lg hover:bg-accent text-destructive"
@@ -234,9 +243,21 @@ export function Navbar() {
   );
 }
 
-function DropItem({ href, label }: { href: string; label: string }) {
+function DropItem({
+  href,
+  label,
+  icon: Icon,
+}: {
+  href: string;
+  label: string;
+  icon?: any;
+}) {
   return (
-    <Link href={href} className="block px-3 py-2 text-sm hover:bg-accent">
+    <Link
+      href={href}
+      className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent"
+    >
+      {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
       {label}
     </Link>
   );

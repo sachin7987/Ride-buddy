@@ -21,7 +21,7 @@ export function DriverOnlyGate({ feature }: { feature: string }) {
             registered as a passenger.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row gap-2 justify-center">
-            <Link href="/profile?becomeDriver=1">
+            <Link href="/account/mode">
               <Button variant="gradient" className="w-full">
                 <Sparkles className="h-4 w-4" /> Become a driver
               </Button>
