@@ -39,12 +39,16 @@ export async function saveFile(file: File, subdir = ""): Promise<string> {
     try {
       // Lazy-import so that local dev works without the package on the import path.
       const { put } = await import("@vercel/blob");
-      const { url } = await put(key, file, {
-        access: "public",
+      // Sensitive uploads (KYC docs, vehicle papers) go into a *private*
+      // store. The URL Vercel returns is not directly accessible — clients
+      // load these images through our own auth-gated proxy at /api/blob/...
+      await put(key, file, {
+        access: "private",
         contentType: file.type || undefined,
         addRandomSuffix: false,
+        allowOverwrite: true,
       });
-      return url;
+      return `/api/blob/${key}`;
     } catch (err: any) {
       console.error("[saveFile] Vercel Blob put() failed", err);
       throw new UploadError(
