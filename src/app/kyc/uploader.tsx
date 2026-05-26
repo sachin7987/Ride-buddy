@@ -51,7 +51,10 @@ export function KycUploader({
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      return toast.error(data?.error || "Upload failed");
+      return toast.error(data?.error || "Upload failed", {
+        description: data?.hint || undefined,
+        duration: 8000,
+      });
     }
     toast.success(`${title} uploaded — pending review`);
     setFile(null);
