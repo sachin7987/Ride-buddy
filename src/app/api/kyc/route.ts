@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { saveFile } from "@/lib/upload";
+import { saveFile, UploadError } from "@/lib/upload";
 import { requiredKycDocs } from "@/lib/roles";
 
 const ALLOWED = ["DRIVING_LICENSE", "AADHAAR", "SELFIE", "PAN"] as const;
@@ -39,7 +39,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
   }
 
-  const fileUrl = await saveFile(file, `kyc/${session.user.id}`);
+  let fileUrl: string;
+  try {
+    fileUrl = await saveFile(file, `kyc/${session.user.id}`);
+  } catch (err) {
+    if (err instanceof UploadError) {
+      return NextResponse.json(
+        { error: err.message, hint: err.hint },
+        { status: 503 }
+      );
+    }
+    console.error("[/api/kyc] upload failed", err);
+    return NextResponse.json(
+      { error: "Could not save the file. Please try again." },
+      { status: 500 }
+    );
+  }
 
   // Replace any prior unapproved doc of same type
   await prisma.kycDocument.deleteMany({

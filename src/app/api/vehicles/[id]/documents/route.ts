@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { saveFile } from "@/lib/upload";
+import { saveFile, UploadError } from "@/lib/upload";
 
 const ALLOWED = ["RC", "INSURANCE", "PHOTO"] as const;
 
@@ -25,7 +25,23 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
   }
 
-  const fileUrl = await saveFile(file, `vehicles/${v.id}`);
+  let fileUrl: string;
+  try {
+    fileUrl = await saveFile(file, `vehicles/${v.id}`);
+  } catch (err) {
+    if (err instanceof UploadError) {
+      return NextResponse.json(
+        { error: err.message, hint: err.hint },
+        { status: 503 }
+      );
+    }
+    console.error("[/api/vehicles/documents] upload failed", err);
+    return NextResponse.json(
+      { error: "Could not save the file. Please try again." },
+      { status: 500 }
+    );
+  }
+
   const patch: Record<string, any> = {};
   if (type === "RC") patch.rcUrl = fileUrl;
   if (type === "INSURANCE") patch.insuranceUrl = fileUrl;
