@@ -1,15 +1,15 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser, userIsDriver } from "@/lib/session";
 import { DriverOnlyGate } from "@/components/role-gate";
 import { Card, CardContent } from "@/components/ui/card";
 import { LiveMap } from "@/components/live-map";
+import { BackLink } from "@/components/ui/back-link";
 import {
   RideLifecycleActions,
   RideStatusPill,
 } from "@/components/ride/lifecycle-actions";
-import { ArrowRight, ArrowLeft, Users } from "lucide-react";
+import { ArrowRight, Users } from "lucide-react";
 import { formatDate, formatTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -37,12 +37,7 @@ export default async function TrackPage({
 
   return (
     <div className="container max-w-4xl py-8">
-      <Link
-        href={`/rides/${ride.id}/bookings`}
-        className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> Back to ride bookings
-      </Link>
+      <BackLink href={`/rides/${ride.id}/bookings`}>Back to ride bookings</BackLink>
       <div className="mt-3 flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold">Live trip</h1>

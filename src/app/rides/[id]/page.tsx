@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BackLink } from "@/components/ui/back-link";
 import { Map } from "@/components/map-loader";
 import { formatINR, formatDate, formatTime } from "@/lib/utils";
 import {
@@ -56,12 +57,7 @@ export default async function RideDetailPage({
 
   return (
     <div className="container max-w-5xl py-8">
-      <Link
-        href="/search"
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← Back to search
-      </Link>
+      <BackLink href="/search">Back to search</BackLink>
 
       <div className="mt-4 grid lg:grid-cols-[1fr_360px] gap-6">
         <div className="space-y-6">
@@ -86,26 +82,26 @@ export default async function RideDetailPage({
                 </div>
               </div>
 
-              <div className="mt-5 grid sm:grid-cols-[auto_1fr] gap-4 items-start">
+              <div className="mt-5 grid grid-cols-[auto_1fr] gap-x-4">
                 <div className="flex flex-col items-center pt-2">
-                  <span className="h-3 w-3 rounded-full bg-brand-500 ring-4 ring-brand-100" />
-                  <span className="my-1 h-12 w-0.5 bg-border" />
-                  <span className="h-3 w-3 rounded-full bg-rose-500 ring-4 ring-rose-100" />
+                  <span className="h-3 w-3 rounded-full bg-brand-500 ring-4 ring-brand-100 shrink-0" />
+                  <span className="my-1 w-0.5 flex-1 min-h-[1.5rem] bg-border" />
+                  <span className="h-3 w-3 rounded-full bg-rose-500 ring-4 ring-rose-100 shrink-0" />
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-4 min-w-0">
                   <div>
                     <div className="text-sm text-muted-foreground">Pickup</div>
-                    <div className="font-medium">{ride.fromAddress}</div>
+                    <div className="font-medium break-words">{ride.fromAddress}</div>
                     <div className="text-xs text-muted-foreground mt-0.5">
                       Departs at {formatTime(ride.departureTime)}
                     </div>
                   </div>
                   <div>
                     <div className="text-sm text-muted-foreground">Drop</div>
-                    <div className="font-medium">{ride.toAddress}</div>
+                    <div className="font-medium break-words">{ride.toAddress}</div>
                     {ride.durationMin && (
                       <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                        <Clock className="h-3 w-3" />~{Math.floor(ride.durationMin / 60)}h{" "}
+                        <Clock className="h-3 w-3 shrink-0" />~{Math.floor(ride.durationMin / 60)}h{" "}
                         {ride.durationMin % 60}min · {ride.distanceKm} km
                       </div>
                     )}

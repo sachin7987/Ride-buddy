@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { ModeSwitcherForm } from "./role-form";
-import { ArrowLeft } from "lucide-react";
+import { BackLink } from "@/components/ui/back-link";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +17,7 @@ export default async function AccountModePage() {
   });
   return (
     <div className="container max-w-2xl py-10">
-      <Link
-        href="/profile"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> Back to profile
-      </Link>
+      <BackLink href="/profile">Back to profile</BackLink>
 
       <div className="mt-4 text-center">
         <h1 className="text-3xl font-bold">Switch mode</h1>

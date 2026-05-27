@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ShieldCheck, Clock } from "lucide-react";
+import { BackLink } from "@/components/ui/back-link";
+import { ShieldCheck, Clock } from "lucide-react";
 import { EditVehicleForm } from "./edit-form";
 import { VehicleDocuments } from "./documents";
 
@@ -28,12 +28,7 @@ export default async function EditVehiclePage({
 
   return (
     <div className="container max-w-3xl py-8">
-      <Link
-        href="/vehicles"
-        className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> Back to my vehicles
-      </Link>
+      <BackLink href="/vehicles">Back to my vehicles</BackLink>
 
       <div className="mt-3 flex items-start justify-between gap-3 flex-wrap">
         <div>

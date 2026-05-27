@@ -93,7 +93,7 @@ export default async function SearchPage({
             description="Try a different date, route or fewer seats. New rides are added every minute."
           />
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-5 md:space-y-6">
             {rides.map((r) => (
               <Link key={r.id} href={`/rides/${r.id}`}>
                 <Card className="hover:shadow-md hover:border-brand-300 transition-all">

@@ -8,13 +8,13 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty";
+import { BackLink } from "@/components/ui/back-link";
 import {
   RideLifecycleActions,
   RideStatusPill,
 } from "@/components/ride/lifecycle-actions";
 import { formatINR, formatDate, formatTime } from "@/lib/utils";
 import {
-  ArrowLeft,
   ArrowRight,
   Phone,
   MessageSquare,
@@ -72,12 +72,7 @@ export default async function RideBookingsPage({
 
   return (
     <div className="container max-w-4xl py-8">
-      <Link
-        href={`/rides/${ride.id}`}
-        className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> Back to ride
-      </Link>
+      <BackLink href={`/rides/${ride.id}`}>Back to ride</BackLink>
 
       {/* Ride header */}
       <Card className="mt-3">
