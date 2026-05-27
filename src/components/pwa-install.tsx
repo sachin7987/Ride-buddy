@@ -8,26 +8,19 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-const STORAGE_DISMISS_KEY = "ridebuddy-pwa-dismissed";
-const STORAGE_DISMISS_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+// Module-level flag — resets on full page reload, but survives across
+// client-side route changes. This means:
+//   • If the user dismisses the banner, it stays hidden for the rest of
+//     this page session (no flicker on every navigation).
+//   • A full refresh gives them another chance to install.
+let dismissedThisSession = false;
 
 function isStandalone() {
   if (typeof window === "undefined") return false;
-  // Android / desktop
   if (window.matchMedia("(display-mode: standalone)").matches) return true;
-  // iOS Safari (legacy)
   // @ts-expect-error: non-standard but used by iOS Safari
   if (window.navigator.standalone === true) return true;
   return false;
-}
-
-function dismissedRecently() {
-  if (typeof window === "undefined") return true;
-  const raw = localStorage.getItem(STORAGE_DISMISS_KEY);
-  if (!raw) return false;
-  const ts = Number(raw);
-  if (Number.isNaN(ts)) return false;
-  return Date.now() - ts < STORAGE_DISMISS_TTL_MS;
 }
 
 export function PwaInstall() {
@@ -46,7 +39,6 @@ export function PwaInstall() {
     ) {
       return;
     }
-    // Defer registration so it doesn't fight with first-paint.
     const onLoad = () => {
       navigator.serviceWorker.register("/sw.js").catch(() => {
         /* PWA install will still work without SW on supported browsers */
@@ -59,10 +51,12 @@ export function PwaInstall() {
   // Listen for the install prompt event (Chrome/Edge/Android).
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (isStandalone() || dismissedRecently()) return;
+    if (isStandalone() || dismissedThisSession) return;
 
     function handler(e: Event) {
       e.preventDefault();
+      // Guard in case the browser re-fires the event after dismissal.
+      if (dismissedThisSession) return;
       setDeferred(e as BeforeInstallPromptEvent);
       setOpen(true);
     }
@@ -73,8 +67,8 @@ export function PwaInstall() {
     const isIos = /iphone|ipad|ipod/.test(ua);
     const isSafari = /safari/.test(ua) && !/crios|fxios|edgios/.test(ua);
     if (isIos && isSafari) {
-      // Show the manual instruction banner after a small delay so it doesn't pop in immediately.
       const t = setTimeout(() => {
+        if (dismissedThisSession) return;
         setShowIosHint(true);
         setOpen(true);
       }, 4000);
@@ -88,18 +82,18 @@ export function PwaInstall() {
   }, []);
 
   function dismiss() {
+    dismissedThisSession = true;
     setOpen(false);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_DISMISS_KEY, String(Date.now()));
-    }
   }
 
   async function install() {
     if (!deferred) return;
     deferred.prompt();
-    const choice = await deferred.userChoice;
-    if (choice.outcome === "accepted") setOpen(false);
-    else dismiss();
+    await deferred.userChoice;
+    // Whether the user accepted or dismissed Chrome's native prompt,
+    // we don't want to nag them again until next refresh.
+    dismissedThisSession = true;
+    setOpen(false);
     setDeferred(null);
   }
 
