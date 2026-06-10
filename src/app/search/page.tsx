@@ -92,23 +92,23 @@ export default async function SearchPage({
         {rides.length === 0 ? (
           <EmptyRideResults fromCity={fromCity} toCity={toCity} date={date} />
         ) : (
-          <div className="space-y-5 md:space-y-6">
+          <div className="space-y-4">
             {rides.map((r) => (
-              <Link key={r.id} href={`/rides/${r.id}`}>
+              <Link key={r.id} href={`/rides/${r.id}`} className="block">
                 <Card className="hover:shadow-md hover:border-brand-300 transition-all">
-                  <CardContent className="p-5">
-                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-center">
-                      <div className="flex items-center gap-4 min-w-0">
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 sm:gap-4 min-w-0">
                         <div className="text-center shrink-0">
-                          <div className="text-lg font-semibold">
+                          <div className="text-base sm:text-lg font-semibold leading-tight">
                             {formatTime(r.departureTime)}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-0.5">
+                          <div className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
                             {formatDate(r.departureTime)}
                           </div>
                         </div>
 
-                        <div className="flex flex-col items-center pt-1">
+                        <div className="flex flex-col items-center pt-1.5 shrink-0">
                           <span className="h-2.5 w-2.5 rounded-full bg-brand-500 ring-4 ring-brand-100" />
                           <span className="my-1 h-8 w-0.5 bg-border" />
                           <span className="h-2.5 w-2.5 rounded-full bg-rose-500 ring-4 ring-rose-100" />
@@ -126,11 +126,13 @@ export default async function SearchPage({
                         </div>
                       </div>
 
-                      <div className="md:text-right">
-                        <div className="text-2xl font-bold text-brand-600">
+                      <div className="text-right shrink-0">
+                        <div className="text-xl sm:text-2xl font-bold text-brand-600 leading-tight">
                           {formatINR(r.pricePerSeat)}
                         </div>
-                        <div className="text-xs text-muted-foreground">per seat</div>
+                        <div className="text-[11px] sm:text-xs text-muted-foreground">
+                          per seat
+                        </div>
                       </div>
                     </div>
 
