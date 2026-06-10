@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { ModeSwitcherForm } from "./role-form";
-import { BackLink } from "@/components/ui/back-link";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +16,7 @@ export default async function AccountModePage() {
   });
   return (
     <div className="container max-w-2xl py-10">
-      <BackLink href="/profile">Back</BackLink>
-
-      <div className="mt-4 text-center">
+      <div className="text-center">
         <h1 className="text-3xl font-bold">Switch mode</h1>
         <p className="mt-2 text-muted-foreground">
           Choose how you want to use RideBuddy. You can change this anytime.
