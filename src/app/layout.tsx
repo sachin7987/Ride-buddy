@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/layout/navbar";
 import { ConditionalFooter } from "@/components/layout/conditional-footer";
+import { EmailVerifyBannerSlot } from "@/components/email-verify-banner-slot";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -42,6 +43,7 @@ export default function RootLayout({
       >
         <Providers>
           <Navbar />
+          <EmailVerifyBannerSlot />
           <main className="flex-1 overflow-y-auto app-scroll">
             <div className="min-h-full flex flex-col">
               <div className="flex-1">{children}</div>

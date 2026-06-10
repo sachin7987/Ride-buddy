@@ -17,6 +17,8 @@ import {
   Sparkles,
   PlusCircle,
   Search as SearchIcon,
+  Car as CarIcon,
+  ArrowRight,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -143,56 +145,144 @@ export default async function HomePage() {
 
       {/* Two-column: drivers & passengers (each side hidden if irrelevant to user) */}
       {(showDriverCta || showPassengerCta) && (
-        <section
-          className={`container py-16 grid gap-6 ${
-            showDriverCta && showPassengerCta ? "md:grid-cols-2" : ""
-          }`}
-        >
-          {showDriverCta && (
-            <Card className="overflow-hidden border-2">
-              <div className="bg-gradient-to-br from-brand-500 to-brand-700 text-white p-8">
-                <div className="text-3xl">🚗</div>
-                <h3 className="mt-3 text-2xl font-bold">For drivers & vehicle owners</h3>
-                <p className="mt-2 text-white/90">
-                  Got an empty seat? Make every trip pay for itself.
-                </p>
+        <section className="container py-16">
+          {showDriverCta && showPassengerCta && (
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-brand-100 text-brand-700 px-3 py-1 text-xs font-semibold tracking-wide uppercase">
+                <Sparkles className="h-3.5 w-3.5" />
+                Two ways to RideBuddy
               </div>
-              <CardContent className="p-6 space-y-3 text-sm">
-                <Bullet>Earn up to ₹15,000/month by sharing your daily route</Bullet>
-                <Bullet>Works for cars, bikes, SUVs, autos — anything you own</Bullet>
-                <Bullet>Choose your passengers: instant booking or manual approval</Bullet>
-                <Bullet>Get paid securely after every trip ends</Bullet>
-                <Link href="/publish" className="block pt-2">
-                  <Button variant="gradient" className="w-full">
-                    Publish a ride
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+              <h2 className="mt-4 text-3xl md:text-4xl font-bold">
+                Whether you drive or ride, there&apos;s a place for you
+              </h2>
+              <p className="mt-3 text-muted-foreground">
+                Pick the side that fits your trip — switch any time from your
+                profile.
+              </p>
+            </div>
           )}
 
-          {showPassengerCta && (
-            <Card className="overflow-hidden border-2">
-              <div className="bg-gradient-to-br from-cyan-500 to-blue-700 text-white p-8">
-                <div className="text-3xl">🧳</div>
-                <h3 className="mt-3 text-2xl font-bold">For passengers</h3>
-                <p className="mt-2 text-white/90">
-                  Travel cheaper, faster and friendlier than buses or trains.
-                </p>
-              </div>
-              <CardContent className="p-6 space-y-3 text-sm">
-                <Bullet>Save up to 75% vs cabs and 50% vs trains</Bullet>
-                <Bullet>Live tracking with your driver so loved ones know where you are</Bullet>
-                <Bullet>Verified drivers, ratings and reviews on every profile</Bullet>
-                <Bullet>Door-to-door pickup, no platform queues</Bullet>
-                <Link href="/search" className="block pt-2">
-                  <Button className="w-full" variant="outline">
-                    Find a ride
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
+          <div
+            className={`grid gap-6 ${
+              showDriverCta && showPassengerCta ? "md:grid-cols-2" : ""
+            }`}
+          >
+            {showDriverCta && (
+              <Card className="group relative overflow-hidden border-2 hover:border-brand-300 hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
+                {/* Gradient header */}
+                <div className="relative bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 text-white p-8 overflow-hidden">
+                  {/* decorative rings */}
+                  <div
+                    aria-hidden="true"
+                    className="absolute -right-20 -top-20 h-56 w-56 rounded-full border-[20px] border-white/10"
+                  />
+                  <div
+                    aria-hidden="true"
+                    className="absolute -right-6 top-12 h-24 w-24 rounded-full bg-white/10 blur-2xl"
+                  />
+
+                  <div className="relative flex items-start justify-between gap-4">
+                    <div className="h-12 w-12 rounded-2xl bg-white/15 ring-1 ring-white/30 backdrop-blur-sm flex items-center justify-center">
+                      <CarIcon className="h-6 w-6" />
+                    </div>
+                    <div className="rounded-full bg-white/15 ring-1 ring-white/30 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+                      Earn extra ₹
+                    </div>
+                  </div>
+
+                  <h3 className="relative mt-5 text-2xl font-bold leading-tight">
+                    Drive &amp; earn
+                  </h3>
+                  <p className="relative mt-1.5 text-white/90 text-sm leading-relaxed">
+                    Got an empty seat? Make every trip pay for itself.
+                  </p>
+                </div>
+
+                {/* Body */}
+                <CardContent className="p-6 sm:p-7 space-y-3.5 text-sm">
+                  <Bullet>
+                    Earn up to{" "}
+                    <strong className="font-semibold">₹15,000/month</strong> by
+                    sharing your daily route
+                  </Bullet>
+                  <Bullet>
+                    Works for cars, bikes, SUVs, autos — anything you own
+                  </Bullet>
+                  <Bullet>
+                    Choose your passengers: instant booking or manual approval
+                  </Bullet>
+                  <Bullet>
+                    Get paid securely after every trip ends
+                  </Bullet>
+
+                  <Link href="/publish" className="block pt-3">
+                    <Button variant="gradient" className="w-full group/btn" size="lg">
+                      <PlusCircle className="h-4 w-4" />
+                      Publish a ride
+                      <ArrowRight className="h-4 w-4 ml-1 transition-transform group-hover/btn:translate-x-0.5" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+
+            {showPassengerCta && (
+              <Card className="group relative overflow-hidden border-2 hover:border-blue-300 hover:-translate-y-1 hover:shadow-2xl transition-all duration-300">
+                <div className="relative bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 text-white p-8 overflow-hidden">
+                  <div
+                    aria-hidden="true"
+                    className="absolute -right-20 -top-20 h-56 w-56 rounded-full border-[20px] border-white/10"
+                  />
+                  <div
+                    aria-hidden="true"
+                    className="absolute -right-6 top-12 h-24 w-24 rounded-full bg-white/10 blur-2xl"
+                  />
+
+                  <div className="relative flex items-start justify-between gap-4">
+                    <div className="h-12 w-12 rounded-2xl bg-white/15 ring-1 ring-white/30 backdrop-blur-sm flex items-center justify-center">
+                      <Users className="h-6 w-6" />
+                    </div>
+                    <div className="rounded-full bg-white/15 ring-1 ring-white/30 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
+                      Save up to 75%
+                    </div>
+                  </div>
+
+                  <h3 className="relative mt-5 text-2xl font-bold leading-tight">
+                    Ride together
+                  </h3>
+                  <p className="relative mt-1.5 text-white/90 text-sm leading-relaxed">
+                    Travel cheaper, faster and friendlier than buses or trains.
+                  </p>
+                </div>
+
+                <CardContent className="p-6 sm:p-7 space-y-3.5 text-sm">
+                  <Bullet>
+                    Save up to{" "}
+                    <strong className="font-semibold">75% vs cabs</strong> and
+                    50% vs trains
+                  </Bullet>
+                  <Bullet>
+                    Live tracking with your driver so loved ones know where you are
+                  </Bullet>
+                  <Bullet>
+                    Verified drivers, ratings and reviews on every profile
+                  </Bullet>
+                  <Bullet>Door-to-door pickup, no platform queues</Bullet>
+
+                  <Link href="/search" className="block pt-3">
+                    <Button
+                      className="w-full group/btn bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800 shadow-md hover:shadow-lg"
+                      size="lg"
+                    >
+                      <SearchIcon className="h-4 w-4" />
+                      Find a ride
+                      <ArrowRight className="h-4 w-4 ml-1 transition-transform group-hover/btn:translate-x-0.5" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </section>
       )}
 
@@ -323,9 +413,11 @@ export default async function HomePage() {
 
 function Bullet({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-2">
-      <CheckCircle2 className="h-4 w-4 mt-0.5 text-brand-600 shrink-0" />
-      <span>{children}</span>
+    <div className="flex items-start gap-2.5">
+      <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700">
+        <CheckCircle2 className="h-3.5 w-3.5" />
+      </span>
+      <span className="leading-relaxed text-foreground/90">{children}</span>
     </div>
   );
 }

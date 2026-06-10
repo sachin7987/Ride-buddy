@@ -1,8 +1,12 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { PlacePicker, type Place } from "@/components/place-picker";
+import {
+  PlacePicker,
+  type Place,
+  type PlacePickerHandle,
+} from "@/components/place-picker";
 import { Map } from "@/components/map-loader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +14,7 @@ import { Input, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Picker } from "@/components/ui/picker";
 import { DatePicker, TimePicker } from "@/components/ui/date-picker";
+import { SwapPlacesButton } from "@/components/ui/swap-places-button";
 import { haversineKm, formatINR } from "@/lib/utils";
 import { Calendar, Clock, IndianRupee, Users, Car } from "lucide-react";
 
@@ -27,6 +32,8 @@ export function PublishRideForm({ vehicles }: { vehicles: Vehicle[] }) {
   const [busy, setBusy] = useState(false);
   const [from, setFrom] = useState<Place | null>(null);
   const [to, setTo] = useState<Place | null>(null);
+  const fromRef = useRef<PlacePickerHandle>(null);
+  const toRef = useRef<PlacePickerHandle>(null);
   const [vehicleId, setVehicleId] = useState(vehicles[0]?.id);
   const [date, setDate] = useState<string>(() => {
     const d = new Date();
@@ -103,17 +110,42 @@ export function PublishRideForm({ vehicles }: { vehicles: Vehicle[] }) {
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-semibold">Route</h3>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div>
+          <div className="grid sm:grid-cols-[1fr_auto_1fr] gap-3 items-end">
+            <div className="min-w-0">
               <Label>From</Label>
               <div className="mt-1">
-                <PlacePicker value={from} onChange={setFrom} placeholder="Pickup city / address" />
+                <PlacePicker
+                  ref={fromRef}
+                  value={from}
+                  onChange={(p) => {
+                    setFrom(p);
+                    if (!to) {
+                      requestAnimationFrame(() => toRef.current?.focus());
+                    }
+                  }}
+                  placeholder="Pickup city / address"
+                />
               </div>
             </div>
-            <div>
+            <div className="hidden sm:flex items-end pb-1">
+              <SwapPlacesButton
+                onClick={() => {
+                  setFrom(to);
+                  setTo(from);
+                }}
+                disabled={!from && !to}
+              />
+            </div>
+            <div className="min-w-0">
               <Label>To</Label>
               <div className="mt-1">
-                <PlacePicker value={to} onChange={setTo} placeholder="Drop city / address" iconColor="text-red-500" />
+                <PlacePicker
+                  ref={toRef}
+                  value={to}
+                  onChange={setTo}
+                  placeholder="Drop city / address"
+                  iconColor="text-red-500"
+                />
               </div>
             </div>
           </div>

@@ -42,9 +42,12 @@ async function main() {
     where: { email },
     update: {
       // Keep the admin flag and verification status pinned, and rotate
-      // the password hash + display name on every deploy.
+      // the password hash + display name on every deploy. The admin email is
+      // operator-controlled (set via env var) so it's inherently trusted —
+      // mark it email-verified so the bootstrap account isn't nagged.
       isAdmin: true,
       kycStatus: "VERIFIED",
+      emailVerified: true,
       role: "BOTH",
       passwordHash,
       name,
@@ -56,6 +59,7 @@ async function main() {
       passwordHash,
       isAdmin: true,
       kycStatus: "VERIFIED",
+      emailVerified: true,
       role: "BOTH",
     },
   });

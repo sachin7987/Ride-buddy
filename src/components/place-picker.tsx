@@ -1,5 +1,12 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { MapPin, Search, Loader2, Sparkles, History, Navigation } from "lucide-react";
 import { searchCities, type City } from "@/lib/cities";
 import { cn } from "@/lib/utils";
@@ -10,6 +17,13 @@ export type Place = {
   address: string;
   lat: number;
   lng: number;
+};
+
+/** Imperative handle exposed by `<PlacePicker ref={…} />` so a parent can
+ *  programmatically focus this picker (e.g. auto-advance after picking the
+ *  "From" city). */
+export type PlacePickerHandle = {
+  focus: () => void;
 };
 
 const RECENTS_KEY = "ridebuddy.recentPlaces";
@@ -32,28 +46,46 @@ function pushRecent(p: Place) {
   localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
 }
 
-export function PlacePicker({
-  value,
-  onChange,
-  placeholder = "City or address",
-  iconColor = "text-brand-600",
-  className,
-}: {
-  value: Place | null;
-  onChange: (p: Place) => void;
-  placeholder?: string;
-  iconColor?: string;
-  className?: string;
-}) {
+export const PlacePicker = forwardRef<
+  PlacePickerHandle,
+  {
+    value: Place | null;
+    onChange: (p: Place) => void;
+    placeholder?: string;
+    iconColor?: string;
+    className?: string;
+  }
+>(function PlacePicker(
+  {
+    value,
+    onChange,
+    placeholder = "City or address",
+    iconColor = "text-brand-600",
+    className,
+  },
+  ref
+) {
   const [q, setQ] = useState(value?.address || value?.city || "");
   const [open, setOpen] = useState(false);
   const [remote, setRemote] = useState<Place[]>([]);
   const [loading, setLoading] = useState(false);
   const [recents, setRecents] = useState<Place[]>([]);
   const [highlight, setHighlight] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
+  const ref_ = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounce = useRef<ReturnType<typeof setTimeout>>();
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: () => {
+        inputRef.current?.focus();
+        // Clicking the input also opens the dropdown — match that for parity.
+        setOpen(true);
+      },
+    }),
+    []
+  );
 
   useEffect(() => {
     setQ(value?.address || value?.city || "");
@@ -111,7 +143,7 @@ export function PlacePicker({
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref_.current && !ref_.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
@@ -175,7 +207,7 @@ export function PlacePicker({
   let cursor = 0;
 
   return (
-    <div ref={ref} className={cn("relative", className)}>
+    <div ref={ref_} className={cn("relative", className)}>
       <div className="relative">
         <MapPin
           className={cn(
@@ -193,10 +225,20 @@ export function PlacePicker({
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           placeholder={placeholder}
-          className="h-12 w-full rounded-lg border border-input bg-background pl-9 pr-9 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent transition-all"
+          className={cn(
+            "h-12 w-full rounded-lg border border-input bg-background pl-9 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent transition-all",
+            // Reserve room for the spinner only while it's visible — otherwise
+            // the truncated city name leaves an awkward gap on the right.
+            loading ? "pr-9" : "pr-3"
+          )}
         />
         {loading && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 inline-flex"
+          >
+            <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+          </span>
         )}
       </div>
 
@@ -317,7 +359,7 @@ export function PlacePicker({
       )}
     </div>
   );
-}
+});
 
 function Section({
   icon: Icon,

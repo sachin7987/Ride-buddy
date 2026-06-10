@@ -28,7 +28,7 @@ export default async function EditVehiclePage({
 
   return (
     <div className="container max-w-3xl py-8">
-      <BackLink href="/vehicles">Back to my vehicles</BackLink>
+      <BackLink href="/vehicles">Back</BackLink>
 
       <div className="mt-3 flex items-start justify-between gap-3 flex-wrap">
         <div>

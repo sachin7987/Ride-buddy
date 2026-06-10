@@ -37,7 +37,7 @@ export default async function TrackPage({
 
   return (
     <div className="container max-w-4xl py-8">
-      <BackLink href={`/rides/${ride.id}/bookings`}>Back to ride bookings</BackLink>
+      <BackLink href={`/rides/${ride.id}/bookings`}>Back</BackLink>
       <div className="mt-3 flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-3xl font-bold">Live trip</h1>

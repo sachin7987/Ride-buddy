@@ -39,6 +39,7 @@ model User {
   locations        Location[]
   payments         Payment[]
   otps             Otp[]
+  emailVerificationTokens EmailVerificationToken[]
 }
 
 // ─── KYC documents (DL, Aadhaar, selfie) ──────────────────────────────────────
@@ -69,6 +70,20 @@ model Otp {
   createdAt DateTime @default(now())
 
   @@index([phone])
+}
+
+// ─── Email verification tokens ────────────────────────────────────────────────
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
 }
 
 // ─── Vehicles ─────────────────────────────────────────────────────────────────

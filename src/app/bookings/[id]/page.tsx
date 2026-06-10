@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RideStatusPill } from "@/components/ride/lifecycle-actions";
+import { BackLink } from "@/components/ui/back-link";
 import { formatDate, formatTime, formatINR } from "@/lib/utils";
 import { ArrowRight, Phone, Star, MessageSquare } from "lucide-react";
 import { Chat } from "@/components/chat";
@@ -75,12 +76,7 @@ export default async function BookingDetailPage({
 
   return (
     <div className="container max-w-4xl py-8">
-      <Link
-        href="/bookings"
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← All trips
-      </Link>
+      <BackLink href="/bookings">Back</BackLink>
 
       <div className="mt-4 grid lg:grid-cols-[1fr_360px] gap-6">
         <div className="space-y-6">

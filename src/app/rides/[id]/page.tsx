@@ -47,7 +47,7 @@ export default async function RideDetailPage({
         },
       },
       vehicle: true,
-      _count: { select: { bookings: { where: { status: { in: ["CONFIRMED", "PENDING"] } } } } },
+      _count: { select: { bookings: { where: { status: "PENDING" } } } },
     },
   });
   if (!ride) notFound();
@@ -57,7 +57,7 @@ export default async function RideDetailPage({
 
   return (
     <div className="container max-w-5xl py-8">
-      <BackLink href="/search">Back to search</BackLink>
+      <BackLink href="/search">Back</BackLink>
 
       <div className="mt-4 grid lg:grid-cols-[1fr_360px] gap-6">
         <div className="space-y-6">
@@ -70,8 +70,10 @@ export default async function RideDetailPage({
                     {formatDate(ride.departureTime)}
                     <RideStatusPill status={ride.status} />
                   </div>
-                  <h1 className="text-2xl font-bold mt-1 flex items-center gap-2">
-                    {ride.fromCity} <ArrowRight className="h-5 w-5" /> {ride.toCity}
+                  <h1 className="text-lg sm:text-2xl font-bold mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <span className="break-words">{ride.fromCity}</span>
+                    <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-muted-foreground" />
+                    <span className="break-words">{ride.toCity}</span>
                   </h1>
                 </div>
                 <div className="text-right">
@@ -221,8 +223,7 @@ export default async function RideDetailPage({
                     <div className="rounded-lg bg-muted/50 px-3 py-2">
                       <div className="text-xs text-muted-foreground">Pending</div>
                       <div className="text-lg font-semibold">
-                        {ride._count.bookings -
-                          (ride.totalSeats - ride.availableSeats)}
+                        {ride._count.bookings}
                       </div>
                     </div>
                   </div>

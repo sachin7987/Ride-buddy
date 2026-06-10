@@ -17,7 +17,7 @@ export default async function AccountModePage() {
   });
   return (
     <div className="container max-w-2xl py-10">
-      <BackLink href="/profile">Back to profile</BackLink>
+      <BackLink href="/profile">Back</BackLink>
 
       <div className="mt-4 text-center">
         <h1 className="text-3xl font-bold">Switch mode</h1>

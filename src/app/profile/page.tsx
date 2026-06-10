@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ProfileEdit } from "./edit-form";
+import { EmailStatusRow } from "./email-status-row";
 import { formatINR } from "@/lib/utils";
 import { Star, ShieldCheck, Car, MapPin, IndianRupee } from "lucide-react";
 import { roleLabel } from "@/lib/roles";
@@ -49,6 +50,10 @@ export default async function ProfilePage() {
               />
               <h2 className="mt-4 font-bold text-lg">{user.name}</h2>
               <p className="text-sm text-muted-foreground">{user.email}</p>
+              <EmailStatusRow
+                email={user.email}
+                verified={user.emailVerified}
+              />
               {user.kycStatus === "VERIFIED" && (
                 <Badge variant="success" className="mt-2">
                   <ShieldCheck className="h-3 w-3 mr-1" /> Verified

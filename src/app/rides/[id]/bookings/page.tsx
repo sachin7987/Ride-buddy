@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty";
 import { BackLink } from "@/components/ui/back-link";
+import { CollapsibleRideHeader } from "./collapsible-ride-header";
 import {
   RideLifecycleActions,
   RideStatusPill,
@@ -69,86 +70,89 @@ export default async function RideBookingsPage({
   const earnings = ride.bookings
     .filter((b) => b.payment?.status === "PAID")
     .reduce((acc, b) => acc + b.totalAmount, 0);
+  const isFinished = ride.status === "COMPLETED" || ride.status === "CANCELLED";
 
   return (
     <div className="container max-w-4xl py-8">
-      <BackLink href={`/rides/${ride.id}`}>Back to ride</BackLink>
+      <BackLink href={`/rides/${ride.id}`}>Back</BackLink>
 
-      {/* Ride header */}
-      <Card className="mt-3">
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <div className="text-xs text-muted-foreground flex items-center gap-3">
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {formatDate(ride.departureTime)}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatTime(ride.departureTime)}
-                </span>
-              </div>
-              <h1 className="mt-1 text-2xl font-bold flex items-center gap-2">
-                {ride.fromCity} <ArrowRight className="h-5 w-5" /> {ride.toCity}
-              </h1>
-              {ride.vehicle && (
-                <div className="mt-1 text-sm text-muted-foreground">
-                  {ride.vehicle.make} {ride.vehicle.model} ·{" "}
-                  <span className="font-mono">{ride.vehicle.plateNumber}</span>
-                </div>
-              )}
+      {/* Ride header — collapsed by default once the ride is finished. */}
+      <CollapsibleRideHeader
+        collapsible={isFinished}
+        defaultExpanded={!isFinished}
+        title={
+          <>
+            <div className="text-xs text-muted-foreground flex items-center gap-3">
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {formatDate(ride.departureTime)}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {formatTime(ride.departureTime)}
+              </span>
             </div>
-            <RideStatusPill status={ride.status} />
-          </div>
+            <h1 className="mt-1 text-lg sm:text-2xl font-bold flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span className="break-words">{ride.fromCity}</span>
+              <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-muted-foreground" />
+              <span className="break-words">{ride.toCity}</span>
+            </h1>
+            {ride.vehicle && (
+              <div className="mt-1 text-sm text-muted-foreground">
+                {ride.vehicle.make} {ride.vehicle.model} ·{" "}
+                <span className="font-mono">{ride.vehicle.plateNumber}</span>
+              </div>
+            )}
+          </>
+        }
+        badge={<RideStatusPill status={ride.status} />}
+      >
+        {/* Quick stats */}
+        <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <Stat
+            icon={Users}
+            label="Seats sold"
+            value={`${seatsSold}/${ride.totalSeats}`}
+          />
+          <Stat
+            icon={Users}
+            label="Available"
+            value={String(ride.availableSeats)}
+          />
+          <Stat
+            icon={MessageSquare}
+            label="Pending"
+            value={String(pending.length)}
+          />
+          <Stat
+            icon={IndianRupee}
+            label="Earnings"
+            value={formatINR(earnings)}
+          />
+        </div>
 
-          {/* Quick stats */}
-          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Stat
-              icon={Users}
-              label="Seats sold"
-              value={`${seatsSold}/${ride.totalSeats}`}
-            />
-            <Stat
-              icon={Users}
-              label="Available"
-              value={String(ride.availableSeats)}
-            />
-            <Stat
-              icon={MessageSquare}
-              label="Pending"
-              value={String(pending.length)}
-            />
-            <Stat
-              icon={IndianRupee}
-              label="Earnings"
-              value={formatINR(earnings)}
-            />
-          </div>
-
-          {/* Lifecycle controls */}
-          <div className="mt-5 pt-5 border-t">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">
-              Ride controls
-            </p>
-            <RideLifecycleActions rideId={ride.id} status={ride.status} />
-            <div className="mt-4 flex flex-wrap gap-2">
-              {(ride.status === "SCHEDULED" || ride.status === "IN_PROGRESS") && (
-                <Link href={`/rides/${ride.id}/track`}>
-                  <Button variant="outline" size="sm">
-                    Open tracker
-                  </Button>
-                </Link>
-              )}
-              <Link href={`/rides/${ride.id}`}>
-                <Button variant="ghost" size="sm">
-                  View public ride page
+        {/* Lifecycle controls */}
+        <div className="mt-5 pt-5 border-t">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">
+            Ride controls
+          </p>
+          <RideLifecycleActions rideId={ride.id} status={ride.status} />
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(ride.status === "SCHEDULED" || ride.status === "IN_PROGRESS") && (
+              <Link href={`/rides/${ride.id}/track`}>
+                <Button variant="outline" size="sm">
+                  Open tracker
                 </Button>
               </Link>
-            </div>
+            )}
+            <Link href={`/rides/${ride.id}`}>
+              <Button variant="ghost" size="sm">
+                View public ride page
+              </Button>
+            </Link>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleRideHeader>
 
       {/* Pending requests */}
       {pending.length > 0 && (

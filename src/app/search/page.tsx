@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
-import { EmptyState } from "@/components/ui/empty";
+import { EmptyRideResults } from "@/components/search/empty-ride-results";
 import { formatINR, formatTime, formatDate } from "@/lib/utils";
 import { SearchHeader } from "./search-header";
 import {
@@ -12,7 +12,6 @@ import {
   Users,
   ArrowRight,
   Clock,
-  Search as SearchIcon,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -72,26 +71,26 @@ export default async function SearchPage({
       </div>
 
       <div className="container py-8">
-        <div className="flex items-baseline justify-between gap-4 mb-4">
+        <div className="flex items-baseline justify-between gap-4 mb-5 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold">
-              {rides.length} ride{rides.length !== 1 ? "s" : ""} found
-            </h1>
-            {fromCity && toCity && (
-              <p className="text-sm text-muted-foreground">
-                {fromCity} <ArrowRight className="inline h-3 w-3" /> {toCity}
-                {date && ` • ${formatDate(new Date(date))}`}
-              </p>
+            {fromCity && toCity ? (
+              <h1 className="text-2xl font-bold flex items-center gap-2 flex-wrap">
+                <span>{fromCity}</span>
+                <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                <span>{toCity}</span>
+              </h1>
+            ) : (
+              <h1 className="text-2xl font-bold">All upcoming rides</h1>
             )}
+            <p className="text-sm text-muted-foreground mt-1">
+              {date && `${formatDate(new Date(date))} · `}
+              {rides.length} ride{rides.length !== 1 ? "s" : ""} available
+            </p>
           </div>
         </div>
 
         {rides.length === 0 ? (
-          <EmptyState
-            icon={SearchIcon}
-            title="No rides found"
-            description="Try a different date, route or fewer seats. New rides are added every minute."
-          />
+          <EmptyRideResults fromCity={fromCity} toCity={toCity} date={date} />
         ) : (
           <div className="space-y-5 md:space-y-6">
             {rides.map((r) => (

@@ -47,6 +47,7 @@ export const authOptions: NextAuthOptions = {
             isAdmin: true,
             avatarUrl: true,
             name: true,
+            emailVerified: true,
           },
         });
         if (fresh) {
@@ -55,6 +56,7 @@ export const authOptions: NextAuthOptions = {
           token.isAdmin = fresh.isAdmin;
           token.picture = fresh.avatarUrl ?? token.picture;
           token.name = fresh.name;
+          (token as any).emailVerified = fresh.emailVerified;
         }
       }
       return token;
@@ -65,6 +67,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).role = token.role;
         (session.user as any).kycStatus = token.kycStatus;
         (session.user as any).isAdmin = token.isAdmin;
+        (session.user as any).emailVerified = (token as any).emailVerified;
       }
       return session;
     },

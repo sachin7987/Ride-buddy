@@ -1,10 +1,15 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { PlacePicker, type Place } from "@/components/place-picker";
+import { useEffect, useRef, useState } from "react";
+import {
+  PlacePicker,
+  type Place,
+  type PlacePickerHandle,
+} from "@/components/place-picker";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { SeatsPicker } from "@/components/ui/seats-picker";
+import { SwapPlacesButton } from "@/components/ui/swap-places-button";
 import { Search } from "lucide-react";
 
 function todayISO() {
@@ -20,6 +25,8 @@ export function SearchHeader() {
   const [to, setTo] = useState<Place | null>(null);
   const [date, setDate] = useState(params.get("date") || todayISO());
   const [seats, setSeats] = useState(parseInt(params.get("seats") || "1"));
+  const fromRef = useRef<PlacePickerHandle>(null);
+  const toRef = useRef<PlacePickerHandle>(null);
 
   useEffect(() => {
     const f = params.get("from");
@@ -57,11 +64,37 @@ export function SearchHeader() {
   return (
     <form
       onSubmit={submit}
-      className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto_auto_auto] gap-2"
+      className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_auto_auto_auto] gap-2 items-stretch"
     >
-      <PlacePicker value={from} onChange={setFrom} placeholder="From" />
-      <PlacePicker value={to} onChange={setTo} placeholder="To" iconColor="text-red-500" />
-      <DatePicker value={date} onChange={setDate} min={todayISO()} />
+      <PlacePicker
+        ref={fromRef}
+        value={from}
+        onChange={(p) => {
+          setFrom(p);
+          if (!to) {
+            requestAnimationFrame(() => toRef.current?.focus());
+          }
+        }}
+        placeholder="From"
+      />
+      <SwapPlacesButton
+        onClick={() => {
+          setFrom(to);
+          setTo(from);
+        }}
+        disabled={!from && !to}
+        className="hidden md:inline-flex"
+      />
+      <PlacePicker
+        ref={toRef}
+        value={to}
+        onChange={setTo}
+        placeholder="To"
+        iconColor="text-red-500"
+      />
+      <div className="md:w-52">
+        <DatePicker value={date} onChange={setDate} min={todayISO()} />
+      </div>
       <SeatsPicker value={seats} onChange={setSeats} className="md:w-32" />
       <Button variant="gradient" size="lg" className="md:px-6">
         <Search className="h-4 w-4" /> Search

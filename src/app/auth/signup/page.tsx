@@ -21,9 +21,12 @@ import {
   Check,
   ArrowLeft,
   ArrowRight,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { postSignupRedirect, type UserRole } from "@/lib/roles";
+import { validateEmail, suggestEmailFix } from "@/lib/email-validation";
 
 const ROLE_OPTIONS: {
   value: UserRole;
@@ -56,6 +59,11 @@ export default function SignupPage() {
   const [step, setStep] = useState<1 | 2>(1);
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
+  const [emailChecking, setEmailChecking] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [phoneChecking, setPhoneChecking] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -64,10 +72,104 @@ export default function SignupPage() {
     role: "PASSENGER" as UserRole,
   });
 
+  function onEmailChange(value: string) {
+    setForm((f) => ({ ...f, email: value }));
+    // Reset error/suggestion as the user types — re-validate on blur instead.
+    if (emailError) setEmailError(null);
+    if (emailSuggestion) setEmailSuggestion(null);
+  }
+
+  async function onEmailBlur() {
+    if (!form.email) return;
+    const result = validateEmail(form.email);
+    if (!result.ok) {
+      setEmailError(result.message);
+      setEmailSuggestion(
+        "suggestion" in result ? result.suggestion ?? null : null
+      );
+      return;
+    }
+    setEmailError(null);
+    // Even if format is fine, hint at common typos.
+    const fix = suggestEmailFix(form.email);
+    setEmailSuggestion(fix);
+
+    // Now ask the server whether the address is already registered. We do
+    // this *only* after format validation passes so we never query the
+    // database on a clearly invalid input.
+    setEmailChecking(true);
+    try {
+      const res = await fetch(
+        `/api/auth/check-availability?email=${encodeURIComponent(result.email)}`
+      );
+      const data = await res.json();
+      // The user may have edited the field while the request was in flight —
+      // in that case the message would be stale. Bail if so.
+      if (form.email.trim().toLowerCase() !== result.email) return;
+      if (!data.available && data.reason === "taken") {
+        setEmailError(data.message);
+      }
+    } catch {
+      // Silent — the server-side check on submit will catch any duplicates.
+    } finally {
+      setEmailChecking(false);
+    }
+  }
+
+  function applySuggestion() {
+    if (!emailSuggestion) return;
+    setForm((f) => ({ ...f, email: emailSuggestion }));
+    setEmailError(null);
+    setEmailSuggestion(null);
+  }
+
+  function onPhoneChange(value: string) {
+    const digits = value.replace(/\D/g, "");
+    setForm((f) => ({ ...f, phone: digits }));
+    if (phoneError) setPhoneError(null);
+  }
+
+  async function onPhoneBlur() {
+    const phone = form.phone;
+    if (!phone) return;
+    if (!/^\d{10}$/.test(phone)) {
+      // Browser-native validation will catch this on submit; don't show
+      // a duplicate-style error for an in-progress entry.
+      return;
+    }
+    setPhoneChecking(true);
+    try {
+      const res = await fetch(
+        `/api/auth/check-availability?phone=${encodeURIComponent(phone)}`
+      );
+      const data = await res.json();
+      if (form.phone !== phone) return;
+      if (!data.available && data.reason === "taken") {
+        setPhoneError(data.message);
+      }
+    } catch {
+      // Server-side check on submit is the ultimate safety net.
+    } finally {
+      setPhoneChecking(false);
+    }
+  }
+
   function nextStep(e: React.FormEvent) {
     e.preventDefault();
-    // Browser-level required + pattern attrs already validated when the
-    // form submits, so by here we know step 1 is complete.
+    // Final email check before advancing — browser-level validation already
+    // ensured the field was filled & matches the type=email pattern.
+    const result = validateEmail(form.email);
+    if (!result.ok) {
+      setEmailError(result.message);
+      setEmailSuggestion(
+        "suggestion" in result ? result.suggestion ?? null : null
+      );
+      return;
+    }
+    // Refuse to advance while there's a known duplicate so the user sees
+    // the inline error immediately.
+    if (emailError || phoneError) return;
+    setForm((f) => ({ ...f, email: result.email }));
     setStep(2);
   }
 
@@ -81,8 +183,22 @@ export default function SignupPage() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "Failed to register");
-      toast.success("Welcome to RideBuddy! Signing you in…");
+      if (!res.ok) {
+        // Server may include a `field` hint so we can route the user back to
+        // step 1 with the offending field highlighted.
+        if (data?.field === "email") {
+          setEmailError(data.error);
+          setEmailSuggestion(data.suggestion ?? null);
+          setStep(1);
+        } else if (data?.field === "phone") {
+          setPhoneError(data.error);
+          setStep(1);
+        }
+        throw new Error(data?.error ?? "Failed to register");
+      }
+      toast.success("Welcome to RideBuddy!", {
+        description: `We sent a verification link to ${form.email}.`,
+      });
       const signRes = await signIn("credentials", {
         email: form.email,
         password: form.password,
@@ -142,14 +258,49 @@ export default function SignupPage() {
                   <Input
                     id="email"
                     type="email"
+                    autoComplete="email"
+                    inputMode="email"
                     required
-                    className="pl-9"
+                    aria-invalid={!!emailError}
+                    aria-describedby={emailError ? "email-error" : undefined}
+                    className={cn(
+                      "pl-9",
+                      emailChecking && "pr-9",
+                      emailError &&
+                        "border-rose-400 focus-visible:ring-rose-300"
+                    )}
                     value={form.email}
-                    onChange={(e) =>
-                      setForm({ ...form, email: e.target.value })
-                    }
+                    onChange={(e) => onEmailChange(e.target.value)}
+                    onBlur={onEmailBlur}
                   />
+                  {emailChecking && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </span>
+                  )}
                 </div>
+                {emailError && (
+                  <p
+                    id="email-error"
+                    className="mt-1 flex items-start gap-1 text-xs text-rose-600"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>{emailError}</span>
+                  </p>
+                )}
+                {!emailError && emailSuggestion && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Did you mean{" "}
+                    <button
+                      type="button"
+                      onClick={applySuggestion}
+                      className="font-medium text-brand-600 underline-offset-2 hover:underline"
+                    >
+                      {emailSuggestion}
+                    </button>
+                    ?
+                  </p>
+                )}
               </div>
               <div>
                 <Label htmlFor="phone">Phone (10 digits)</Label>
@@ -158,19 +309,38 @@ export default function SignupPage() {
                   <Input
                     id="phone"
                     type="tel"
+                    autoComplete="tel"
+                    inputMode="numeric"
                     pattern="[0-9]{10}"
                     maxLength={10}
                     required
-                    className="pl-9"
+                    aria-invalid={!!phoneError}
+                    aria-describedby={phoneError ? "phone-error" : undefined}
+                    className={cn(
+                      "pl-9",
+                      phoneChecking && "pr-9",
+                      phoneError &&
+                        "border-rose-400 focus-visible:ring-rose-300"
+                    )}
                     value={form.phone}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        phone: e.target.value.replace(/\D/g, ""),
-                      })
-                    }
+                    onChange={(e) => onPhoneChange(e.target.value)}
+                    onBlur={onPhoneBlur}
                   />
+                  {phoneChecking && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </span>
+                  )}
                 </div>
+                {phoneError && (
+                  <p
+                    id="phone-error"
+                    className="mt-1 flex items-start gap-1 text-xs text-rose-600"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                    <span>{phoneError}</span>
+                  </p>
+                )}
               </div>
               <div>
                 <Label htmlFor="password">Password</Label>
