@@ -35,7 +35,13 @@ export async function saveFile(file: File, subdir = ""): Promise<string> {
   const filename = `${crypto.randomBytes(8).toString("hex")}${ext}`;
   const key = subdir ? `${subdir}/${filename}` : filename;
 
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  // Only talk to Vercel Blob when we're actually deployed (Vercel sets VERCEL=1)
+  // or running a production build. In local `next dev` we always use the
+  // filesystem fallback below — even if a BLOB_READ_WRITE_TOKEN happens to be
+  // present in .env — so a stale/rotated token can't break local uploads.
+  const onServerless = Boolean(process.env.VERCEL) || process.env.NODE_ENV === "production";
+
+  if (onServerless && process.env.BLOB_READ_WRITE_TOKEN) {
     try {
       // Lazy-import so that local dev works without the package on the import path.
       const { put } = await import("@vercel/blob");

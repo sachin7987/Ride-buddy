@@ -82,30 +82,73 @@ export default async function KycPage() {
         </Card>
       )}
 
-      <div className="mt-8 space-y-4">
-        {required.includes("DRIVING_LICENSE") && (
+      {status === "VERIFIED" ? (
+        // Verified identities are locked — show the submitted documents
+        // read-only instead of upload widgets so they can't be re-submitted.
+        <div className="mt-8 space-y-3">
+          {required.map((t) => {
+            const doc = byType(t);
+            return (
+              <Card key={t}>
+                <CardContent className="p-5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="font-medium">
+                        {t.replace(/_/g, " ")}
+                      </div>
+                      {doc?.number && (
+                        <div className="text-xs text-muted-foreground font-mono truncate">
+                          {doc.number}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="success">Approved</Badge>
+                    {doc?.fileUrl && (
+                      <a
+                        href={doc.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-brand-600 hover:underline"
+                      >
+                        View
+                      </a>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-8 space-y-4">
+          {required.includes("DRIVING_LICENSE") && (
+            <KycUploader
+              type="DRIVING_LICENSE"
+              title="Driving License"
+              description="Required to drive. Front side, fully visible."
+              existing={byType("DRIVING_LICENSE")}
+              requiresNumber
+            />
+          )}
           <KycUploader
-            type="DRIVING_LICENSE"
-            title="Driving License"
-            description="Required to drive. Front side, fully visible."
-            existing={byType("DRIVING_LICENSE")}
+            type="AADHAAR"
+            title="Aadhaar Card"
+            description="Front & back combined into one image. Mask 8 digits if you wish."
+            existing={byType("AADHAAR")}
             requiresNumber
           />
-        )}
-        <KycUploader
-          type="AADHAAR"
-          title="Aadhaar Card"
-          description="Front & back combined into one image. Mask 8 digits if you wish."
-          existing={byType("AADHAAR")}
-          requiresNumber
-        />
-        <KycUploader
-          type="SELFIE"
-          title="Live selfie"
-          description="A clear photo of yourself, holding your ID next to your face."
-          existing={byType("SELFIE")}
-        />
-      </div>
+          <KycUploader
+            type="SELFIE"
+            title="Live selfie"
+            description="A clear photo of yourself, holding your ID next to your face."
+            existing={byType("SELFIE")}
+            allowCamera
+          />
+        </div>
+      )}
 
       {isPassengerOnly && (
         <div className="mt-6 rounded-lg border bg-muted/40 p-4 text-sm">

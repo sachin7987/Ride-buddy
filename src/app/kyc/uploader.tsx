@@ -1,12 +1,13 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, FileCheck2, Image as ImageIcon } from "lucide-react";
+import { Upload, FileCheck2, Image as ImageIcon, Camera } from "lucide-react";
+import { CameraCapture } from "./camera-capture";
 
 type Doc = {
   id: string;
@@ -23,18 +24,34 @@ export function KycUploader({
   description,
   existing,
   requiresNumber,
+  allowCamera,
 }: {
   type: string;
   title: string;
   description: string;
   existing?: Doc;
   requiresNumber?: boolean;
+  allowCamera?: boolean;
 }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [number, setNumber] = useState(existing?.number ?? "");
   const [busy, setBusy] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Keep an object-URL preview in sync with the chosen file (camera or picker)
+  // and revoke it to avoid leaks.
+  useEffect(() => {
+    if (!file) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   async function upload() {
     if (!file) return toast.error("Choose a file first");
@@ -99,14 +116,36 @@ export function KycUploader({
           </div>
         )}
 
+        {allowCamera && (
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-4 w-full"
+            onClick={() => setCameraOpen(true)}
+          >
+            <Camera className="h-4 w-4" /> Take a selfie with camera
+          </Button>
+        )}
+
         <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-end">
           <div className="flex-1">
-            <label className="text-sm font-medium">Upload image (max 5MB)</label>
+            <label className="text-sm font-medium">
+              {allowCamera ? "Or upload an image (max 5MB)" : "Upload image (max 5MB)"}
+            </label>
             <div
               className="mt-1 rounded-lg border-2 border-dashed p-4 text-center cursor-pointer hover:bg-accent/50 transition-colors"
               onClick={() => fileRef.current?.click()}
             >
-              <ImageIcon className="mx-auto h-6 w-6 text-muted-foreground" />
+              {previewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={previewUrl}
+                  alt="Selected document preview"
+                  className="mx-auto max-h-40 rounded-md object-contain"
+                />
+              ) : (
+                <ImageIcon className="mx-auto h-6 w-6 text-muted-foreground" />
+              )}
               <p className="mt-1 text-sm">
                 {file ? (
                   <span className="font-medium">{file.name}</span>
@@ -132,6 +171,13 @@ export function KycUploader({
             Upload
           </Button>
         </div>
+
+        {cameraOpen && (
+          <CameraCapture
+            onCapture={(f) => setFile(f)}
+            onClose={() => setCameraOpen(false)}
+          />
+        )}
 
         {existing && existing.status === "APPROVED" && (
           <div className="mt-3 flex items-center gap-2 text-sm text-emerald-700">

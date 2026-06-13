@@ -4,8 +4,8 @@ import { Mail, Phone, MapPin, Globe, Send, Heart } from "lucide-react";
 export function Footer() {
   return (
     <footer className="border-t bg-secondary/40">
-      <div className="container py-12 grid gap-8 md:grid-cols-4">
-        <div>
+      <div className="container py-10 md:py-12 grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4">
+        <div className="col-span-2 md:col-span-1">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white">
               <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5">
@@ -53,31 +53,37 @@ export function Footer() {
         <div>
           <h4 className="font-semibold text-sm mb-3">Company</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link href="#" className="hover:text-foreground">About</Link></li>
-            <li><Link href="#" className="hover:text-foreground">How it works</Link></li>
-            <li><Link href="#" className="hover:text-foreground">Safety</Link></li>
-            <li><Link href="#" className="hover:text-foreground">Help</Link></li>
+            <li><Link href="/about" className="hover:text-foreground">About</Link></li>
+            <li><Link href="/how-it-works" className="hover:text-foreground">How it works</Link></li>
+            <li><Link href="/safety" className="hover:text-foreground">Safety</Link></li>
+            <li><Link href="/help" className="hover:text-foreground">Help</Link></li>
           </ul>
         </div>
 
-        <div>
+        <div className="col-span-2 md:col-span-1">
           <h4 className="font-semibold text-sm mb-3">Contact</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-center gap-2">
-              <Mail className="h-4 w-4" /> hello@ridebuddy.in
+              <Mail className="h-4 w-4 shrink-0" />
+              <a href="mailto:hello@ridebuddy.in" className="hover:text-foreground break-all">
+                hello@ridebuddy.in
+              </a>
             </li>
             <li className="flex items-center gap-2">
-              <Phone className="h-4 w-4" /> +91 1800-RIDE-NOW
+              <Phone className="h-4 w-4 shrink-0" />
+              <a href="tel:+918001433669" className="hover:text-foreground">
+                +91 1800-RIDE-NOW
+              </a>
             </li>
             <li className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" /> Bengaluru, India
+              <MapPin className="h-4 w-4 shrink-0" /> Bengaluru, India
             </li>
           </ul>
         </div>
       </div>
 
       <div className="border-t">
-        <div className="container py-4 flex flex-col md:flex-row justify-between gap-2 text-xs text-muted-foreground">
+        <div className="container py-4 flex flex-col-reverse items-center gap-3 text-center md:flex-row md:justify-between md:gap-2 md:text-left text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} RideBuddy. All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="#" className="hover:text-foreground">Terms</Link>

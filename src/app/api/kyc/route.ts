@@ -27,6 +27,23 @@ export async function POST(req: Request) {
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Once a user is fully verified, lock KYC submissions — they shouldn't be
+  // able to overwrite an approved identity by re-uploading documents.
+  const current = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { kycStatus: true },
+  });
+  if (current?.kycStatus === "VERIFIED") {
+    return NextResponse.json(
+      {
+        error: "Your identity is already verified.",
+        hint: "Verified accounts can't re-upload documents. Contact support if something needs updating.",
+      },
+      { status: 403 }
+    );
+  }
+
   const form = await req.formData();
   const type = String(form.get("type") || "");
   const number = (form.get("number") as string | null) ?? undefined;

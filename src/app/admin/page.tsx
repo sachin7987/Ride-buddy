@@ -2,17 +2,19 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { ApproveButtons } from "./approve-buttons";
 import { ApproveVehicleButtons } from "./approve-vehicle-buttons";
-import { formatDate } from "@/lib/utils";
+import { RecentDecisions, type DecisionUser } from "./recent-decisions";
+import {
+  PendingSubmissions,
+  type PendingUser,
+} from "./pending-submissions";
 import { Car } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   await requireAdmin();
-  const [pending, recent, stats, pendingVehicles] = await Promise.all([
+  const [pending, recentDecisions, stats, pendingVehicles] = await Promise.all([
     prisma.kycDocument.findMany({
       where: { status: "PENDING" },
       include: {
@@ -20,11 +22,14 @@ export default async function AdminPage() {
       },
       orderBy: { createdAt: "asc" },
     }),
+    // Most recent reviewed documents — used to surface which users were
+    // decided on lately. We then load each of those users' *full* document
+    // set below so the grouped card can show pending vs approved at a glance.
     prisma.kycDocument.findMany({
       where: { status: { in: ["APPROVED", "REJECTED"] } },
-      include: { user: { select: { name: true } } },
+      select: { userId: true, reviewedAt: true },
       orderBy: { reviewedAt: "desc" },
-      take: 10,
+      take: 100,
     }),
     prisma.user.groupBy({
       by: ["kycStatus"],
@@ -44,6 +49,91 @@ export default async function AdminPage() {
 
   const stat = (s: string) => stats.find((x) => x.kycStatus === s)?._count ?? 0;
 
+  // Group pending documents by user so each person gets a single card.
+  const pendingUsers: PendingUser[] = [];
+  const pendingIndex = new Map<string, PendingUser>();
+  for (const d of pending) {
+    let bucket = pendingIndex.get(d.user.id);
+    if (!bucket) {
+      bucket = {
+        id: d.user.id,
+        name: d.user.name,
+        email: d.user.email,
+        avatarUrl: d.user.avatarUrl,
+        docs: [],
+      };
+      pendingIndex.set(d.user.id, bucket);
+      pendingUsers.push(bucket);
+    }
+    bucket.docs.push({
+      id: d.id,
+      type: d.type,
+      number: d.number,
+      fileUrl: d.fileUrl,
+    });
+  }
+
+  // Distinct users with a recent decision, newest decision first (the query is
+  // already ordered by reviewedAt desc, so first-seen == most recent).
+  const decisionUserIds: string[] = [];
+  const lastDecisionByUser = new Map<string, Date | null>();
+  for (const d of recentDecisions) {
+    if (!lastDecisionByUser.has(d.userId)) {
+      decisionUserIds.push(d.userId);
+      lastDecisionByUser.set(d.userId, d.reviewedAt);
+    }
+  }
+  const topUserIds = decisionUserIds.slice(0, 12);
+
+  const decisionUserRecords = topUserIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: topUserIds } },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+          kycStatus: true,
+          kycDocuments: {
+            select: {
+              id: true,
+              type: true,
+              status: true,
+              reviewedAt: true,
+              createdAt: true,
+              number: true,
+              fileUrl: true,
+            },
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      })
+    : [];
+
+  // Preserve the most-recent-decision ordering and serialize dates for the
+  // client component.
+  const recordById = new Map(decisionUserRecords.map((u) => [u.id, u]));
+  const decisionUsers: DecisionUser[] = topUserIds
+    .map((id) => recordById.get(id))
+    .filter((u): u is NonNullable<typeof u> => Boolean(u))
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      avatarUrl: u.avatarUrl,
+      kycStatus: u.kycStatus,
+      lastDecisionAt: lastDecisionByUser.get(u.id)?.toISOString() ?? null,
+      docs: u.kycDocuments.map((d) => ({
+        id: d.id,
+        type: d.type,
+        status: d.status,
+        reviewedAt: d.reviewedAt ? d.reviewedAt.toISOString() : null,
+        createdAt: d.createdAt.toISOString(),
+        number: d.number,
+        fileUrl: d.fileUrl,
+      })),
+    }));
+
   return (
     <div className="container max-w-5xl py-10">
       <h1 className="text-3xl font-bold">Admin · KYC review</h1>
@@ -56,54 +146,12 @@ export default async function AdminPage() {
       </div>
 
       <h2 className="mt-8 text-xl font-semibold">Pending submissions</h2>
-      {pending.length === 0 ? (
-        <Card className="mt-3">
-          <CardContent className="p-8 text-center text-muted-foreground">
-            All caught up. No pending documents.
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="mt-3 space-y-3">
-          {pending.map((d) => (
-            <Card key={d.id}>
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div className="flex items-center gap-3">
-                    <Avatar src={d.user.avatarUrl} name={d.user.name} size={40} />
-                    <div>
-                      <div className="font-medium">{d.user.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {d.user.email}
-                      </div>
-                    </div>
-                  </div>
-                  <Badge>{d.type.replace("_", " ")}</Badge>
-                </div>
-                {d.number && (
-                  <p className="mt-2 text-sm">
-                    <span className="text-muted-foreground">Document number: </span>
-                    <span className="font-mono">{d.number}</span>
-                  </p>
-                )}
-                <a
-                  href={d.fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block mt-3"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={d.fileUrl}
-                    alt="document"
-                    className="max-h-64 rounded-lg border bg-muted object-contain"
-                  />
-                </a>
-                <ApproveButtons id={d.id} />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      {pendingUsers.length > 0 && (
+        <p className="mt-1 text-sm text-muted-foreground">
+          Grouped by user — tap a card to review and approve their documents.
+        </p>
       )}
+      <PendingSubmissions users={pendingUsers} />
 
       <h2 className="mt-10 text-xl font-semibold flex items-center gap-2">
         <Car className="h-5 w-5" /> Vehicle verification queue
@@ -154,26 +202,10 @@ export default async function AdminPage() {
       )}
 
       <h2 className="mt-10 text-xl font-semibold">Recent decisions</h2>
-      <div className="mt-3 space-y-2">
-        {recent.map((d) => (
-          <div
-            key={d.id}
-            className="flex items-center justify-between rounded-lg border bg-card px-4 py-3 text-sm"
-          >
-            <span>
-              {d.user.name} · {d.type.replace("_", " ")}
-            </span>
-            <span className="flex items-center gap-2">
-              <Badge variant={d.status === "APPROVED" ? "success" : "destructive"}>
-                {d.status}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                {d.reviewedAt && formatDate(d.reviewedAt)}
-              </span>
-            </span>
-          </div>
-        ))}
-      </div>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Grouped by user — tap a card to see each document&apos;s status.
+      </p>
+      <RecentDecisions users={decisionUsers} />
     </div>
   );
 }
