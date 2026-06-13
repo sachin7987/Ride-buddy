@@ -71,12 +71,12 @@ export function Footer() {
             </li>
             <li className="flex items-center gap-2">
               <Phone className="h-4 w-4 shrink-0" />
-              <a href="tel:+918001433669" className="hover:text-foreground">
-                +91 1800-RIDE-NOW
+              <a href="tel:+917987208509" className="hover:text-foreground">
+                +91 7987208509
               </a>
             </li>
             <li className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 shrink-0" /> Bengaluru, India
+              <MapPin className="h-4 w-4 shrink-0" /> Bhopal, MP, India
             </li>
           </ul>
         </div>

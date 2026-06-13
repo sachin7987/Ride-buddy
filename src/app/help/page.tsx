@@ -130,7 +130,7 @@ export default function HelpPage() {
                 </CardContent>
               </Card>
             </a>
-            <a href="tel:+918001433669">
+            <a href="tel:+917987208509">
               <Card className="hover:border-brand-300 border-2 transition-colors h-full">
                 <CardContent className="p-6 flex items-center gap-4">
                   <div className="h-11 w-11 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center shrink-0">
@@ -139,7 +139,7 @@ export default function HelpPage() {
                   <div className="min-w-0">
                     <div className="font-semibold">Call us</div>
                     <div className="text-sm text-muted-foreground">
-                      +91 1800-RIDE-NOW
+                      +91 7987208509
                     </div>
                   </div>
                 </CardContent>

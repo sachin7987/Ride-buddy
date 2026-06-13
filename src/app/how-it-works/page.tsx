@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/marketing/page-hero";
+import { getSession } from "@/lib/session";
 import {
   ShieldCheck,
   Search as SearchIcon,
@@ -68,7 +69,11 @@ const driverSteps = [
   },
 ];
 
-export default function HowItWorksPage() {
+export const dynamic = "force-dynamic";
+
+export default async function HowItWorksPage() {
+  const session = await getSession();
+  const loggedIn = Boolean(session?.user);
   return (
     <div>
       <PageHero
@@ -134,15 +139,24 @@ export default function HowItWorksPage() {
       <section className="container py-16 text-center">
         <h2 className="text-2xl md:text-3xl font-bold">Ready to ride?</h2>
         <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-          Create your free account and complete verification once — then publish
-          or book in seconds.
+          {loggedIn
+            ? "You're all set — find a ride heading your way or publish your own in seconds."
+            : "Create your free account and complete verification once — then publish or book in seconds."}
         </p>
         <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-          <Link href="/auth/signup">
-            <Button variant="gradient" size="lg">
-              Get started <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
+          {loggedIn ? (
+            <Link href="/search">
+              <Button variant="gradient" size="lg">
+                <SearchIcon className="h-4 w-4" /> Find a ride
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/auth/signup">
+              <Button variant="gradient" size="lg">
+                Get started <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          )}
           <Link href="/safety">
             <Button variant="outline" size="lg">
               <ShieldCheck className="h-4 w-4" /> How we keep you safe

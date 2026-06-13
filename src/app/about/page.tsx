@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/marketing/page-hero";
+import { getSession } from "@/lib/session";
 import {
   Building2,
   ShieldCheck,
@@ -11,6 +12,7 @@ import {
   Users,
   Heart,
   ArrowRight,
+  Search as SearchIcon,
 } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -19,7 +21,11 @@ export const metadata: Metadata = {
     "RideBuddy is India's trusted carpooling community — connecting verified drivers and passengers to save money, cut traffic and reduce emissions.",
 };
 
-export default function AboutPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AboutPage() {
+  const session = await getSession();
+  const loggedIn = Boolean(session?.user);
   return (
     <div>
       <PageHero
@@ -137,25 +143,51 @@ export default function AboutPage() {
       <section className="container py-16">
         <Card className="border-2 border-brand-200">
           <CardContent className="p-8 md:p-12 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold">
-              Join a million travellers
-            </h2>
-            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-              Create your free account, verify once, and start sharing rides
-              across India today.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
-              <Link href="/auth/signup">
-                <Button variant="gradient" size="lg">
-                  Get started <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/how-it-works">
-                <Button variant="outline" size="lg">
-                  How it works
-                </Button>
-              </Link>
-            </div>
+            {loggedIn ? (
+              <>
+                <h2 className="text-2xl md:text-3xl font-bold">
+                  Ready for your next trip?
+                </h2>
+                <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
+                  Find a ride heading your way or share your own route with
+                  verified travellers across India.
+                </p>
+                <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
+                  <Link href="/search">
+                    <Button variant="gradient" size="lg">
+                      <SearchIcon className="h-4 w-4" /> Find a ride
+                    </Button>
+                  </Link>
+                  <Link href="/publish">
+                    <Button variant="outline" size="lg">
+                      Publish a ride
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl md:text-3xl font-bold">
+                  Join a million travellers
+                </h2>
+                <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
+                  Create your free account, verify once, and start sharing rides
+                  across India today.
+                </p>
+                <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
+                  <Link href="/auth/signup">
+                    <Button variant="gradient" size="lg">
+                      Get started <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/how-it-works">
+                    <Button variant="outline" size="lg">
+                      How it works
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </section>
