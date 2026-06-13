@@ -27,29 +27,60 @@ type Vehicle = {
   seats: number;
 };
 
-export function PublishRideForm({ vehicles }: { vehicles: Vehicle[] }) {
+export type RideFormInitial = {
+  from: Place;
+  to: Place;
+  vehicleId?: string;
+  date: string;
+  time: string;
+  seats: number;
+  price: number;
+  description: string;
+  instantBooking: boolean;
+  womenOnly: boolean;
+  allowMusic: boolean;
+  allowSmoking: boolean;
+  allowPets: boolean;
+};
+
+export function PublishRideForm({
+  vehicles,
+  rideId,
+  initial,
+}: {
+  vehicles: Vehicle[];
+  /** When provided, the form edits this ride instead of publishing a new one. */
+  rideId?: string;
+  initial?: RideFormInitial;
+}) {
   const router = useRouter();
+  const isEdit = !!rideId;
   const [busy, setBusy] = useState(false);
-  const [from, setFrom] = useState<Place | null>(null);
-  const [to, setTo] = useState<Place | null>(null);
+  const [from, setFrom] = useState<Place | null>(initial?.from ?? null);
+  const [to, setTo] = useState<Place | null>(initial?.to ?? null);
   const fromRef = useRef<PlacePickerHandle>(null);
   const toRef = useRef<PlacePickerHandle>(null);
-  const [vehicleId, setVehicleId] = useState(vehicles[0]?.id);
+  const [vehicleId, setVehicleId] = useState(
+    initial?.vehicleId ?? vehicles[0]?.id
+  );
   const [date, setDate] = useState<string>(() => {
+    if (initial?.date) return initial.date;
     const d = new Date();
     d.setDate(d.getDate() + 1);
     return d.toISOString().slice(0, 10);
   });
-  const [time, setTime] = useState("09:00");
-  const [seats, setSeats] = useState(vehicles[0]?.seats ?? 4);
-  const [price, setPrice] = useState(0);
-  const [description, setDescription] = useState("");
+  const [time, setTime] = useState(initial?.time ?? "09:00");
+  const [seats, setSeats] = useState(
+    initial?.seats ?? vehicles[0]?.seats ?? 4
+  );
+  const [price, setPrice] = useState(initial?.price ?? 0);
+  const [description, setDescription] = useState(initial?.description ?? "");
   const [opts, setOpts] = useState({
-    instantBooking: true,
-    womenOnly: false,
-    allowMusic: true,
-    allowSmoking: false,
-    allowPets: false,
+    instantBooking: initial?.instantBooking ?? true,
+    womenOnly: initial?.womenOnly ?? false,
+    allowMusic: initial?.allowMusic ?? true,
+    allowSmoking: initial?.allowSmoking ?? false,
+    allowPets: initial?.allowPets ?? false,
   });
 
   const distance = useMemo(() => {
@@ -73,8 +104,8 @@ export function PublishRideForm({ vehicles }: { vehicles: Vehicle[] }) {
 
     setBusy(true);
     const departureTime = new Date(`${date}T${time}:00`);
-    const res = await fetch("/api/rides", {
-      method: "POST",
+    const res = await fetch(isEdit ? `/api/rides/${rideId}` : "/api/rides", {
+      method: isEdit ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         fromCity: from.city,
@@ -96,11 +127,14 @@ export function PublishRideForm({ vehicles }: { vehicles: Vehicle[] }) {
     setBusy(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      return toast.error(data?.error || "Could not publish ride");
+      return toast.error(
+        data?.error || (isEdit ? "Could not update ride" : "Could not publish ride")
+      );
     }
     const { ride } = await res.json();
-    toast.success("Ride published!");
+    toast.success(isEdit ? "Ride updated!" : "Ride published!");
     router.push(`/rides/${ride.id}`);
+    router.refresh();
   }
 
   const v = vehicles.find((x) => x.id === vehicleId);
@@ -281,9 +315,19 @@ export function PublishRideForm({ vehicles }: { vehicles: Vehicle[] }) {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-3">
+        {isEdit && (
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={() => router.push(`/rides/${rideId}`)}
+          >
+            Cancel
+          </Button>
+        )}
         <Button type="submit" variant="gradient" size="lg" loading={busy}>
-          Publish ride
+          {isEdit ? "Save changes" : "Publish ride"}
         </Button>
       </div>
     </form>

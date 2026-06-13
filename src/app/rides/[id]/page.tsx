@@ -20,6 +20,7 @@ import {
   Cigarette,
   PawPrint,
   Sparkles,
+  Pencil,
 } from "lucide-react";
 import { BookingPanel } from "./booking-panel";
 import { RideStatusPill } from "@/components/ride/lifecycle-actions";
@@ -235,6 +236,13 @@ export default async function RideDetailPage({
                       View ride bookings
                     </Button>
                   </Link>
+                  {ride.status === "SCHEDULED" && (
+                    <Link href={`/rides/${ride.id}/edit`} className="block mt-2">
+                      <Button variant="outline" className="w-full">
+                        <Pencil className="h-4 w-4 mr-2" /> Edit ride
+                      </Button>
+                    </Link>
+                  )}
                   {(ride.status === "SCHEDULED" ||
                     ride.status === "IN_PROGRESS") && (
                     <Link
