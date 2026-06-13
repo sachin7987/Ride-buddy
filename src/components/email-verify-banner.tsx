@@ -1,9 +1,28 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Mail, X, Loader2, ShieldCheck } from "lucide-react";
 
 const STORAGE_KEY = "ridebuddy.emailVerifyDismissed";
+const DISMISS_TTL_MS = 12 * 60 * 60 * 1000;
+
+// Survives client-side remounts of the banner (the server slot re-renders on
+// navigation), so dismissing once hides it for the whole session even if
+// localStorage is unavailable.
+let dismissedThisSession = false;
+
+function isPersistentlyDismissed() {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const ts = Number(raw);
+    if (Number.isNaN(ts)) return false;
+    return Date.now() - ts < DISMISS_TTL_MS;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Top-of-page banner shown to signed-in users whose email isn't verified.
@@ -12,25 +31,33 @@ const STORAGE_KEY = "ridebuddy.emailVerifyDismissed";
  *   nag every page load yet eventually re-surface the banner.
  * • The "Resend" button hits /api/auth/resend-verification which has a
  *   60-second per-user cooldown server-side.
+ *
+ * NOTE: We deliberately initialise `dismissed` to a value that matches the
+ * server render and only read localStorage inside an effect. Reading
+ * localStorage during the initial render caused a hydration mismatch that
+ * could leave the dismiss button without an attached click handler.
  */
 export function EmailVerifyBanner({ email }: { email: string }) {
-  const [dismissed, setDismissed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const ts = Number(raw);
-    if (Number.isNaN(ts)) return false;
-    return Date.now() - ts < 12 * 60 * 60 * 1000;
-  });
+  const [dismissed, setDismissed] = useState(dismissedThisSession);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (dismissedThisSession || isPersistentlyDismissed()) {
+      dismissedThisSession = true;
+      setDismissed(true);
+    }
+  }, []);
 
   if (dismissed) return null;
 
   function dismiss() {
-    setDismissed(true);
-    if (typeof window !== "undefined") {
+    dismissedThisSession = true;
+    try {
       localStorage.setItem(STORAGE_KEY, String(Date.now()));
+    } catch {
+      // localStorage can throw in private mode — the session flag still hides it.
     }
+    setDismissed(true);
   }
 
   async function resend() {
@@ -48,6 +75,7 @@ export function EmailVerifyBanner({ email }: { email: string }) {
         toast.success("Your email is already verified — refresh the page!", {
           icon: <ShieldCheck className="h-4 w-4" />,
         });
+        dismissedThisSession = true;
         setDismissed(true);
         return;
       }
